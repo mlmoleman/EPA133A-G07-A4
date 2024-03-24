@@ -52,12 +52,8 @@ The folder has a specific structure that is as follows:
 The data folder contains the data files needed and produced by the .py files and should look like:
 
     data/
-     ├── raw/ 
-         └── roads.csv
-         └── bridges.xlsx
-     ├── processed/
-         └── filename.csv
-         └── filename.xlsx
+     ├── roads.csv
+     └── bridges.xlsx
 
 The experiment folder contains the scenario results in CSV-format and should look like:
 
