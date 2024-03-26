@@ -1,0 +1,4 @@
+,Link no,Name,Start location,Start location,Start location,End location,End location,End location,Length,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Total,Total,Total,Traffic
+,Unnamed: 0_level_1,Unnamed: 1_level_1,LRP,Offset,Chainage,LRP,Offset,Chainage,(Km),Heavy Truck,Medium Truck,Small Truck,Large Bus,Medium Bus,Micro Bus,Utility,Car,Auto Rickshaw,Motor Cycle,Bi-Cycle,Cycle Rickshaw,Cart,Motorized,Non Motorized,Total AADT,(AADT)
+0,N204-1,Jagadishpur-Chunarughat (Int.with Z2008),LRPS,0,0.0,LRP022,5439,25.449,25.449,0.0,176.0,190.0,31.0,38.0,204.0,43.0,92.0,1119.0,378.0,127.0,230.0,0.0,2271.0,357.0,2628.0,2628.0
+1,N204-2,Chunarughat (Int.with Z2008)-Shaisthaganj,LRP022,5439,25.449,LRPE,0,34.421,8.972,0.0,176.0,190.0,31.0,38.0,204.0,43.0,92.0,1119.0,378.0,127.0,230.0,0.0,2271.0,357.0,2628.0,2628.0
