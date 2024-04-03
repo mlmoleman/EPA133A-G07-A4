@@ -315,28 +315,14 @@ class Vehicle(Agent):
         """
         vehicle shall move to the next object with the given distance
         """
-        print("\n")
-        print("truck id: ", self.unique_id)
-        print("location index", self.location_index)
-        print("location offset:", self.location_offset)
-        print("location length:", self.location.length)
-        print("path:", self.path_ids)
-        if self.removed:
-            self.location_index = self.location_index
-        else:
-            self.location_index += 1
 
-        print("increased location index :", self.location_index)
-        if self.location_index >= len(self.path_ids):
-            print("oops! we have reached the sourcesinks already! ")
+        self.location_index += 1
+
         next_id = self.path_ids[self.location_index]
         next_infra = self.model.schedule._agents[next_id]  # Access to protected member _agents
-        print("Next infra", next_infra)
-        print("Next infra length", next_infra.length)
-        print("location offset:", self.location_offset)
 
-        if isinstance(next_infra, Sink):
-            if next_id == self.path_ids[-1]:
+        if next_id == self.path_ids[-1]:
+            if isinstance(next_infra, Sink):
                 # arrive at the sink
                 self.arrive_at_next(next_infra, 0)
                 # retrieve the time step
@@ -351,36 +337,44 @@ class Vehicle(Agent):
                 self.model.speed_of_trucks.append(self.net_speed)
                 # remove vehicle from location
                 self.location.remove(self)
-                self.removed = True
-                print("Now removed:", self.removed)
+                # then removed to True
+                self.removed=True
                 return
-            else:
-                self.drive_to_next(distance)
-        elif isinstance(next_infra, Bridge):
-            # Get bridge name to check for L and R side
-            bridge_name = next_infra.get_name()
-            # Get location of current object
-            prev_x_loc = self.location.pos[0]
-            # Get location of next objec
-            next_x_loc = next_infra.pos[0]
-            # Check if the bridge is L and if the next location is more east than the current location
-            if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
-                # Skip L bridge
-                self.drive_to_next(distance)
-            # Check if the bridge is R and if the next location is more west than the current location
-            elif bridge_name[-2:] == '(R' and prev_x_loc > next_x_loc:
-                # Skip R bridge
-                self.drive_to_next(distance)
-            else:
-                # If this bridge shouldn't be skipped, continue
-                pass
-            self.waiting_time = next_infra.get_delay_time()
-            if self.waiting_time > 0:
-                # arrive at the bridge and wait
-                self.arrive_at_next(next_infra, 0)
-                self.state = Vehicle.State.WAIT
+        else:
+            if isinstance(next_infra, Sink):
+                # drive to next object:
+                self.drive_to_next(distance - next_infra.length)
                 return
+
+            elif isinstance(next_infra, Bridge):
+                # Get bridge name to check for L and R side
+                bridge_name = next_infra.get_name()
+                # Get location of current object
+                prev_x_loc = self.location.pos[0]
+                # Get location of next objec
+                next_x_loc = next_infra.pos[0]
+                # Check if the bridge is L and if the next location is more east than the current location
+                if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
+                    # Skip L bridge
+                    self.drive_to_next(distance)
+                # Check if the bridge is R and if the next location is more west than the current location
+                elif bridge_name[-2:] == '(R' and prev_x_loc > next_x_loc:
+                    # Skip R bridge
+                    self.drive_to_next(distance)
+                else:
+                    # If this bridge shouldn't be skipped, continue
+                    pass
+                self.waiting_time = next_infra.get_delay_time()
+                if self.waiting_time > 0:
+                    # arrive at the bridge and wait
+                    self.arrive_at_next(next_infra, 0)
+                    self.state = Vehicle.State.WAIT
+                    return
             # else, continue driving
+        # if removed is True set distance to zero
+        if self.removed:
+            distance = 0
+
         if next_infra.length > distance:
             # stay on this object:
             self.arrive_at_next(next_infra, distance)
