@@ -83,6 +83,10 @@ def insert_links(df, dict_links):
 main_df = insert_links(df, dict_links)
 # Adding an id to every object
 main_df['id'] = main_df.index
+# Adding a column with the cumulative weight of Cargo transport
+main_df['Cargo Weight cumsum'] = main_df['SourceSink Cargo Weight'].cumsum()
+# Adding a column with the cumulative weight of Personal transport
+main_df['People Weight cumsum'] = main_df['SourceSink People Weight'].cumsum()
 # Drop the Unnamed column
 main_df.drop(columns=['Unnamed: 0'], inplace=True)
 # Set index to road column
