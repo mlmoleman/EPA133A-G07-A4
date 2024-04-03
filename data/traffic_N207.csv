@@ -1,0 +1,6 @@
+,Link no,Name,Start location,Start location,Start location,End location,End location,End location,Length,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Traffic Data,Total,Total,Total,Traffic
+,Unnamed: 0_level_1,Unnamed: 1_level_1,LRP,Offset,Chainage,LRP,Offset,Chainage,(Km),Heavy Truck,Medium Truck,Small Truck,Large Bus,Medium Bus,Micro Bus,Utility,Car,Auto Rickshaw,Motor Cycle,Bi-Cycle,Cycle Rickshaw,Cart,Motorized,Non Motorized,Total AADT,(AADT)
+0,N207-1,Mirpur-Natun Bazar (Int.with Z2008),LRPS,0,0.0,LRP001,1990,2.99,2.99,31.0,423.0,312.0,198.0,142.0,323.0,162.0,386.0,2594.0,467.0,141.0,150.0,0.0,5038.0,291.0,5329.0,5329.0
+1,N207-2,Natun Bazar (Int.with Z2008)-Srimongal (Int.with Z2003),LRP001,1990,2.99,LRP024,464,24.319,21.329,31.0,423.0,312.0,198.0,142.0,323.0,162.0,386.0,2594.0,467.0,141.0,150.0,0.0,5038.0,291.0,5329.0,5329.0
+2,N207-3,Srimongal (Int.with Z2003)-Moulvibazar (Int.with N208),LRP024,464,24.319,LRP043,12,42.917,18.598,31.0,423.0,312.0,198.0,142.0,323.0,162.0,386.0,2594.0,467.0,141.0,150.0,0.0,5038.0,291.0,5329.0,5329.0
+3,N207-4,Moulvibazar (Int.with N208)-Sherpur,LRP043,12,42.917,LRPE,0,67.985,25.068,31.0,423.0,312.0,198.0,142.0,323.0,162.0,386.0,2594.0,467.0,141.0,150.0,0.0,5038.0,291.0,5329.0,5329.0
