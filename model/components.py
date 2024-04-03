@@ -73,7 +73,9 @@ class Bridge(Infra):
         elif (self.model.flood_lever == False) & (self.model.cyclone_lever == True):
             self.collapse_chance = self.model.collapse_dict[self.condition] * cyclone_factor
         elif (self.model.flood_lever == True) & (self.model.cyclone_lever == True):
+
             self.collapse_chance = self.model.collapse_dict[self.condition] * cyclone_factor * flood_factor
+            print(self.collapse_chance)
         else:
             self.collapse_chance = self.model.collapse_dict[self.condition]
         # elif (self.model.flood_lever==True) & (self.model.flood_lever ==False):

@@ -5,6 +5,7 @@ from mesa.time import BaseScheduler
 from mesa.space import ContinuousSpace
 from components import Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle, CargoVehicle, PersonalVehicle
 import pandas as pd
+import numpy as np
 from collections import defaultdict
 from statistics import mean
 from mesa.datacollection import DataCollector
@@ -140,7 +141,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
+                 collapse_dict: defaultdict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}, routing_type: str = "shortest",
                  flood_lever=False, cyclone_lever=False):
 
         self.flood_lever = flood_lever
@@ -166,7 +167,7 @@ class BangladeshModel(Model):
 
         self.driving_time_of_trucks = []  # initialise list for driving time of trucks
         self.speed_of_trucks = []  # initialise list for speed for trucks
-        self.collapsed_conditions_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+        self.collapsed_conditions_dict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}
 
         self.n_cargo = 2
         self.n_personal = 1
@@ -265,6 +266,18 @@ class BangladeshModel(Model):
         # import data
         df = pd.read_csv(self.file_name)
 
+        cyclone_impact_weight = dict(zip(np.sort(df.CycloonCat.unique()), np.arange(0.0, 0.5, 0.13333333333)))
+        df["CycloonImpact"] = df["CycloonCat"].map(cyclone_impact_weight)
+        df["CycloonImpact"] = df["CycloonImpact"] + 1
+
+        flood_impact_weight = {0: 0.6, 1: 0.6, 2: 0.4,
+                               3: 0.2, 4: 0.4, 5: 0.2,
+                               6: 0.1, 7: 0.8, 8: 0.6}
+
+        df["FloodImpact"] = df["FLOODCAT"].map(flood_impact_weight)
+        df["FloodImpact"] = df["FloodImpact"] + 1
+
+
         # a list of names of roads to be generated
         roads = df['road'].unique().tolist()
         df_objects_all = []
@@ -332,7 +345,7 @@ class BangladeshModel(Model):
                     self.sinks.append(agent.unique_id)
                     self.sourcesinks.append(agent)
                 elif model_type == 'bridge':
-                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'])#, row['FLOODCAT'], row['CycloonCat'])
+                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'], row['FloodImpact'], row['CycloonImpact'])
                 elif model_type == 'link':
                     agent = Link(row['id'], self, row['length'], name, row['road'])
                 elif model_type == 'intersection':
