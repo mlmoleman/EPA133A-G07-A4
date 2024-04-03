@@ -279,7 +279,6 @@ class BangladeshModel(Model):
                 path_ids.reset_index(inplace=True, drop=True)
                 self.path_ids_dict[path_ids[0], path_ids.iloc[-1]] = path_ids
                 self.path_ids_dict[path_ids[0], None] = path_ids
-
         # put back to df with selected roads so that min and max and be easily calculated
         df = pd.concat(df_objects_all)
         y_min, y_max, x_min, x_max = set_lat_lon_bound(
@@ -325,13 +324,14 @@ class BangladeshModel(Model):
                     if not row['id'] in self.schedule._agents:
                         agent = Intersection(row['id'], self, row['length'], name, row['road'])
 
+
                 if agent:
                     self.schedule.add(agent)
                     y = row['lat']
                     x = row['lon']
                     self.space.place_agent(agent, (x, y))
                     agent.pos = (x, y)
-
+        print("Sinks:", self.sinks)
         # define the model metrics we want to extract for each model run
         model_metrics = {
                         "step": get_steps,

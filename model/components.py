@@ -263,6 +263,7 @@ class Vehicle(Agent):
         self.next_infra_name = None  # set an attribute 'next_infra_name' to distinguish the L and R bridge
         self.driving_time = 0  # driving time of vehicle with certain travel path
         self.travel_distance = 0  # travel distance of path
+        self.removed = False
 
     def __str__(self):
         return "Vehicle" + str(self.unique_id) + \
@@ -300,6 +301,7 @@ class Vehicle(Agent):
         # the distance that vehicle drives in a tick
         # speed is global now: can change to instance object when individual speed is needed
         distance = Vehicle.speed * Vehicle.step_time
+
         distance_rest = self.location_offset + distance - self.location.length
 
         if distance_rest > 0:
@@ -313,27 +315,47 @@ class Vehicle(Agent):
         """
         vehicle shall move to the next object with the given distance
         """
+        print("\n")
+        print("truck id: ", self.unique_id)
+        print("location index", self.location_index)
+        print("location offset:", self.location_offset)
+        print("location length:", self.location.length)
+        print("path:", self.path_ids)
+        if self.removed:
+            self.location_index = self.location_index
+        else:
+            self.location_index += 1
 
-        self.location_index += 1
+        print("increased location index :", self.location_index)
+        if self.location_index >= len(self.path_ids):
+            print("oops! we have reached the sourcesinks already! ")
         next_id = self.path_ids[self.location_index]
         next_infra = self.model.schedule._agents[next_id]  # Access to protected member _agents
+        print("Next infra", next_infra)
+        print("Next infra length", next_infra.length)
+        print("location offset:", self.location_offset)
 
         if isinstance(next_infra, Sink):
-            # arrive at the sink
-            self.arrive_at_next(next_infra, 0)
-            # retrieve the time step
-            self.removed_at_step = self.model.schedule.steps
-            # compute the driving time, which equals the difference between the time step when generated and removed
-            self.driving_time = self.removed_at_step - self.generated_at_step
-            # add driving time to list of driving times for all trucks in model class
-            self.model.driving_time_of_trucks.append(self.driving_time)
-            # compute the netto speed, depends on travel distance of path
-            self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
-            # add netto speed to list of speed for all trucks in model class
-            self.model.speed_of_trucks.append(self.net_speed)
-            # remove vehicle from location
-            self.location.remove(self)
-            return
+            if next_id == self.path_ids[-1]:
+                # arrive at the sink
+                self.arrive_at_next(next_infra, 0)
+                # retrieve the time step
+                self.removed_at_step = self.model.schedule.steps
+                # compute the driving time, which equals the difference between the time step when generated and removed
+                self.driving_time = self.removed_at_step - self.generated_at_step
+                # add driving time to list of driving times for all trucks in model class
+                self.model.driving_time_of_trucks.append(self.driving_time)
+                # compute the netto speed, depends on travel distance of path
+                self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
+                # add netto speed to list of speed for all trucks in model class
+                self.model.speed_of_trucks.append(self.net_speed)
+                # remove vehicle from location
+                self.location.remove(self)
+                self.removed = True
+                print("Now removed:", self.removed)
+                return
+            else:
+                self.drive_to_next(distance)
         elif isinstance(next_infra, Bridge):
             # Get bridge name to check for L and R side
             bridge_name = next_infra.get_name()
@@ -359,7 +381,6 @@ class Vehicle(Agent):
                 self.state = Vehicle.State.WAIT
                 return
             # else, continue driving
-
         if next_infra.length > distance:
             # stay on this object:
             self.arrive_at_next(next_infra, distance)
@@ -371,9 +392,12 @@ class Vehicle(Agent):
         """
         Arrive at next_infra with the given location_offset
         """
+
         self.location.vehicle_count -= 1
         self.location = next_infra
+
         self.location_offset = location_offset
+
         self.location.vehicle_count += 1
 
 # EOF -----------------------------------------------------------
