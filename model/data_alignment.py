@@ -11,10 +11,7 @@ def data_network():
     This function returns a dataframe used to align bridge data with intersections
     """
     # import bridge data
-    df_bridges = pd.read_csv('../data/bridges_cleaned_sourcesinked.csv')
-
-    # drop old column named index
-    df_bridges = df_bridges.drop(["index", "Unnamed: 0"], axis='columns')
+    df_bridges = pd.read_csv('../data/bridges_cleaned_maps_sourcesinked.csv')
     # add intersection to column
     df_bridges['intersec_to'] = None
     # reposition columns
