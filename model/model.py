@@ -1,7 +1,9 @@
+import random
+
 from mesa import Model
 from mesa.time import BaseScheduler
 from mesa.space import ContinuousSpace
-from components import Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle
+from components import Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle, CargoVehicle, PersonalVehicle
 import pandas as pd
 from collections import defaultdict
 from statistics import mean
@@ -149,6 +151,7 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
+        self.sourcesinks = []
 
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
@@ -160,6 +163,9 @@ class BangladeshModel(Model):
         self.driving_time_of_trucks = []  # initialise list for driving time of trucks
         self.speed_of_trucks = []  # initialise list for speed for trucks
         self.collapsed_conditions_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+
+        self.n_cargo = 2
+        self.n_personal = 1
 
     def generate_network(self):
         """
@@ -313,9 +319,10 @@ class BangladeshModel(Model):
                     agent = Sink(row['id'], self, row['length'], name, row['road'])
                     self.sinks.append(agent.unique_id)
                 elif model_type == 'sourcesink':
-                    agent = SourceSink(row['id'], self, row['length'], name, row['road'])
+                    agent = SourceSink(row['id'], self, row['length'], name, row['road'], row['SourceSink Cargo Weight'], row['Cargo Weight cumsum'], row['SourceSink People Weight'], row['People Weight cumsum'])
                     self.sources.append(agent.unique_id)
                     self.sinks.append(agent.unique_id)
+                    self.sourcesinks.append(agent)
                 elif model_type == 'bridge':
                     agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'])
                 elif model_type == 'link':
@@ -358,7 +365,7 @@ class BangladeshModel(Model):
                 break
         return self.path_ids_dict[source, sink]
 
-    def get_shortest_path_route(self, source):
+    def get_shortest_path_route(self, source, agent):
         """
         gives the shortest path between an origin and destination,
         based on bridge network defined using NetworkX library,
@@ -368,8 +375,28 @@ class BangladeshModel(Model):
         network = self.G
         # determine the sink to calculate the shortest path to
         while True:
-            # different source and sink
-            sink = self.random.choice(self.sinks)
+            # check if the agent is an instance of CargoVehicle
+            if isinstance(agent, CargoVehicle):
+                # determine random number between 0 and 1
+                r = self.random.random()
+                # create a list of the cumulative sum of the cargo transport weights of the sourcesinks
+                lst_cargo_cumsum = [agent.cargo_cumsum for agent in self.sourcesinks]
+                # determine the location of the sink based on the random number
+                ss = next(i for i, e in enumerate(lst_cargo_cumsum) if e >= r)
+                # get the unique_id of the sink
+                sink = self.sourcesinks[ss].unique_id
+            # check if the agent is an instance of PersonalVehicle
+            elif isinstance(agent, PersonalVehicle):
+                # determine random number between 0 and 1
+                r = self.random.random()
+                # create a list of the cumulative sum of the personal transport weights of the sourcesinks
+                lst_personal_cumsum = [agent.personal_cumsum for agent in self.sourcesinks]
+                # determine the location of the sink based on the random number
+                ss = next(i for i, e in enumerate(lst_personal_cumsum) if e >= r)
+                # get the unique_id of the sink
+                sink = self.sourcesinks[ss].unique_id
+            # if sink is not equal to source, break
+            # otherwise determine sink again
             if sink is not source:
                 break
         # the dictionary key is the origin, destination combination:
@@ -385,7 +412,6 @@ class BangladeshModel(Model):
             # assign value to shortest path dictionary, which is a tuple of the path and length of the path
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
             # print("path", shortest_path, "length:",shortest_path_length)
-
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
@@ -394,21 +420,72 @@ class BangladeshModel(Model):
         """
         return self.path_ids_dict[source, None]
 
-    def get_route(self, source):
+    def get_route(self, source, agent):
         if self.routing_type == "random":
             return self.get_random_route(source)
         elif self.routing_type == "straight":
             return self.get_straight_route(source)
         elif self.routing_type == "shortest":
-            return self.get_shortest_path_route(source)
+            return self.get_shortest_path_route(source, agent)
         else:
             return self.get_straight_route(source)
+
+    def generate_cargo(self):
+        # generate the desired amount of cargo vehicles
+        for n in range(self.n_cargo):
+            # determine a random number between 0 and 1
+            r = self.random.random()
+            # create a list of the cumulative sum of the cargo transport weights of the sourcesinks
+            lst_cargo_cumsum = [agent.cargo_cumsum for agent in self.sourcesinks]
+            # determine the source that generates this vehicle
+            ss = next(i for i, e in enumerate(lst_cargo_cumsum) if e >= r)
+            # get the actual source instance
+            source = self.sourcesinks[ss]
+            # try to create a CargoVehicle, else exception error will be raised
+            try:
+                agent = CargoVehicle('Cargo' + str(source.unique_id) + '-' + str(source.truck_counter), self, source)
+                if agent:
+                    self.schedule.add(agent)
+                    agent.set_path()
+                    source.truck_counter += 1
+                    source.vehicle_count += 1
+                    source.vehicle_generated_flag = True
+            except Exception as e:
+                print("Oops!", e.__class__, "occurred.")
+
+    def generate_personal(self):
+        # generate the desired amount of personal vehicles
+        for n in range(self.n_personal):
+            # determine a random number between 0 and 1
+            r = self.random.random()
+            # create a list of the cumulative sum of the personal transport weights of the sourcesinks
+            lst_personal_cumsum = [agent.personal_cumsum for agent in self.sourcesinks]
+            # determine the source that generates this vehicle
+            ss = next(i for i, e in enumerate(lst_personal_cumsum) if e >= r)
+            # get the actual source instance
+            source = self.sourcesinks[ss]
+            # try to create a PersonalVehicle, else exception error will be raised
+            try:
+                agent = PersonalVehicle('Personal'+ str(source.unique_id) + '-' + str(source.truck_counter), self, source)
+                if agent:
+                    self.schedule.add(agent)
+                    agent.set_path()
+                    source.truck_counter += 1
+                    source.vehicle_count += 1
+                    source.vehicle_generated_flag = True
+                    print('Personal truck is generated at', source)
+            except Exception as e:
+                print("Oops!", e.__class__, "occurred.")
+
 
     def step(self):
         """
         Advance the simulation by one step.
         """
+        self.generate_cargo()
+        self.generate_personal()
         self.datacollector.collect(self)
         self.schedule.step()
+
 
 # EOF -----------------------------------------------------------

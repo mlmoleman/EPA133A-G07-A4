@@ -129,6 +129,9 @@ class Sink(Infra):
     """
     vehicle_removed_toggle = False
 
+    def __init__(self, unique_id, model, length=0, name='Unknown', road_name='Unknown'):
+        super().__init__(unique_id, model, length, name, road_name)
+
     def remove(self, vehicle):
         self.model.schedule.remove(vehicle)
         self.vehicle_removed_toggle = not self.vehicle_removed_toggle
@@ -158,26 +161,29 @@ class Source(Infra):
     generation_frequency = 5
     vehicle_generated_flag = False
 
-    def step(self):
-        if self.model.schedule.steps % self.generation_frequency == 0:
-            self.generate_truck()
-        else:
-            self.vehicle_generated_flag = False
+    def __init__(self, unique_id, model, length=0, name='Unknown', road_name='Unknown'):
+        super().__init__(unique_id, model, length, name, road_name)
 
-    def generate_truck(self):
-        """
-        Generates a truck, sets its path, increases the global and local counters
-        """
-        try:
-            agent = Vehicle('Truck' + str(Source.truck_counter), self.model, self)
-            if agent:
-                self.model.schedule.add(agent)
-                agent.set_path()
-                Source.truck_counter += 1
-                self.vehicle_count += 1
-                self.vehicle_generated_flag = True
-        except Exception as e:
-            print("Oops!", e.__class__, "occurred.")
+    # def step(self):
+    #     if self.model.schedule.steps % self.generation_frequency == 0:
+    #         self.generate_truck()
+    #     else:
+    #         self.vehicle_generated_flag = False
+    #
+    # def generate_truck(self):
+    #     """
+    #     Generates a truck, sets its path, increases the global and local counters
+    #     """
+    #     try:
+    #         agent = Vehicle('Truck' + str(Source.truck_counter), self.model, self)
+    #         if agent:
+    #             self.model.schedule.add(agent)
+    #             agent.set_path()
+    #             Source.truck_counter += 1
+    #             self.vehicle_count += 1
+    #             self.vehicle_generated_flag = True
+    #     except Exception as e:
+    #         print("Oops!", e.__class__, "occurred.")
 
 
 # ---------------------------------------------------------------
@@ -185,6 +191,12 @@ class SourceSink(Source, Sink):
     """
     Generates and removes trucks
     """
+    def __init__(self, unique_id, model, length=0, name='Unknown', road_name='Unknown', cargo_weight=None, cargo_cumsum=None, personal_weight=None, personal_cumsum=None):
+        super().__init__(unique_id, model, length, name, road_name)
+        self.cargo_weight = cargo_weight
+        self.cargo_cumsum = cargo_cumsum
+        self.personal_weight = personal_weight
+        self.personal_cumsum = personal_cumsum
 
     pass
 
@@ -275,7 +287,7 @@ class Vehicle(Agent):
         """
         Set the origin destination path of the vehicle
         """
-        random_route = self.model.get_route(self.generated_by.unique_id)
+        random_route = self.model.get_route(self.generated_by.unique_id, self)
         self.path_ids = random_route[0]
         self.travel_distance = random_route[1]
 
@@ -295,7 +307,7 @@ class Vehicle(Agent):
         """
         To print the vehicle trajectory at each step
         """
-        # print(self)
+        print(self)
 
     def drive(self):
         # the distance that vehicle drives in a tick
@@ -329,6 +341,9 @@ class Vehicle(Agent):
                 self.removed_at_step = self.model.schedule.steps
                 # compute the driving time, which equals the difference between the time step when generated and removed
                 self.driving_time = self.removed_at_step - self.generated_at_step
+                # if driving_time is equal to zero -> set to 1
+                if self.driving_time == 0:
+                    self.driving_time = 1
                 # add driving time to list of driving times for all trucks in model class
                 self.model.driving_time_of_trucks.append(self.driving_time)
                 # compute the netto speed, depends on travel distance of path
@@ -395,3 +410,103 @@ class Vehicle(Agent):
         self.location.vehicle_count += 1
 
 # EOF -----------------------------------------------------------
+
+# ---------------------------------------------------------------
+class CargoVehicle(Vehicle):
+    """
+
+    Attributes
+    __________
+    speed: float
+        speed in meter per minute (m/min)
+
+    step_time: int
+        the number of minutes (or seconds) a tick represents
+        Used as a base to change unites
+
+    state: Enum (DRIVE | WAIT)
+        state of the vehicle
+
+    location: Infra
+        reference to the Infra where the vehicle is located
+
+    location_offset: float
+        the location offset in meters relative to the starting point of
+        the Infra, which has a certain length
+        i.e. location_offset < length
+
+    path_ids: Series
+        the whole path (origin and destination) where the vehicle shall drive
+        It consists the Infras' uniques IDs in a sequential order
+
+    location_index: int
+        a pointer to the current Infra in "path_ids" (above)
+        i.e. the id of self.location is self.path_ids[self.location_index]
+
+    waiting_time: int
+        the time the vehicle needs to wait
+
+    generated_at_step: int
+        the timestamp (number of ticks) that the vehicle is generated
+
+    removed_at_step: int
+        the timestamp (number of ticks) that the vehicle is removed
+
+    driving_time: float
+        the driving time on the road for a vehicle
+
+    travel_distance: float
+
+    """
+
+    pass
+
+# ---------------------------------------------------------------
+class PersonalVehicle(Vehicle):
+    """
+
+    Attributes
+    __________
+    speed: float
+        speed in meter per minute (m/min)
+
+    step_time: int
+        the number of minutes (or seconds) a tick represents
+        Used as a base to change unites
+
+    state: Enum (DRIVE | WAIT)
+        state of the vehicle
+
+    location: Infra
+        reference to the Infra where the vehicle is located
+
+    location_offset: float
+        the location offset in meters relative to the starting point of
+        the Infra, which has a certain length
+        i.e. location_offset < length
+
+    path_ids: Series
+        the whole path (origin and destination) where the vehicle shall drive
+        It consists the Infras' uniques IDs in a sequential order
+
+    location_index: int
+        a pointer to the current Infra in "path_ids" (above)
+        i.e. the id of self.location is self.path_ids[self.location_index]
+
+    waiting_time: int
+        the time the vehicle needs to wait
+
+    generated_at_step: int
+        the timestamp (number of ticks) that the vehicle is generated
+
+    removed_at_step: int
+        the timestamp (number of ticks) that the vehicle is removed
+
+    driving_time: float
+        the driving time on the road for a vehicle
+
+    travel_distance: float
+
+    """
+
+    pass
