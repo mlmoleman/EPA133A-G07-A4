@@ -3,7 +3,7 @@ import random
 from mesa import Model
 from mesa.time import BaseScheduler
 from mesa.space import ContinuousSpace
-from components import Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle, CargoVehicle, PersonalVehicle
+from components import Infra, Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle, CargoVehicle, PersonalVehicle
 import pandas as pd
 import numpy as np
 from collections import defaultdict
@@ -372,8 +372,17 @@ class BangladeshModel(Model):
                         "D_collapsed": get_D_collapsed
                         }
 
+        # define the model metrics we want to extract for each model run
+        agent_metrics = {
+                        "Type of agent": lambda a: a.type,
+                        "Number of vehicles passing bridge": lambda a: a.vehicles_passing if isinstance(a, Bridge) else None,
+                        "Number of vehicles waiting at bridge": lambda a: a.vehicles_waiting if isinstance(a, Bridge) else None,
+                        "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Infra) else None,
+                        "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
+                        }
+
         # set up the data collector
-        self.datacollector = DataCollector(model_reporters=model_metrics)
+        self.datacollector = DataCollector(model_reporters=model_metrics, agent_reporters=agent_metrics)
 
     def get_random_route(self, source):
         """

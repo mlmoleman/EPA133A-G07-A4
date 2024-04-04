@@ -81,6 +81,9 @@ class Bridge(Infra):
         # elif (self.model.flood_lever==True) & (self.model.flood_lever ==False):
         self.collapsed = False
         self.delay_time = 0
+        self.type = 'Bridge'
+        self.vehicles_passing = 0
+        self.vehicles_waiting = 0
 
         # self.flood_factor = flood_factor
         # self.cyclone_factor = cyclone_factor
@@ -118,16 +121,26 @@ class Bridge(Infra):
     def step(self):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
+        # Set the vehicles that passed back to 0
+        self.vehicles_passing = 0
+        # Set the vehicles that are waiting to 0
+        self.vehicles_waiting = 0
 
 
 # ---------------------------------------------------------------
 class Link(Infra):
-    pass
 
+    def __init__(self, unique_id, model, length=0,
+                 name='Unknown', road_name='Unknown'):
+        super().__init__(unique_id, model, length, name, road_name)
+        self.type = 'Link'
 
 # ---------------------------------------------------------------
 class Intersection(Infra):
-    pass
+    def __init__(self, unique_id, model, length=0,
+                 name='Unknown', road_name='Unknown'):
+        super().__init__(unique_id, model, length, name, road_name)
+        self.type = 'Intersection'
 
 
 # ---------------------------------------------------------------
@@ -214,6 +227,7 @@ class SourceSink(Source, Sink):
         self.cargo_cumsum = cargo_cumsum
         self.personal_weight = personal_weight
         self.personal_cumsum = personal_cumsum
+        self.type = 'SourceSink'
 
     pass
 
@@ -317,6 +331,9 @@ class Vehicle(Agent):
             if self.waiting_time == 0:
                 self.waited_at = self.location
                 self.state = Vehicle.State.DRIVE
+            else:
+                # Continue waiting and update n vehicles waiting
+                self.location.vehicles_waiting += 1
 
         if self.state == Vehicle.State.DRIVE:
             self.drive()
@@ -324,7 +341,7 @@ class Vehicle(Agent):
         """
         To print the vehicle trajectory at each step
         """
-        # print(self)
+        #print(self)
 
     def drive(self):
         # the distance that vehicle drives in a tick
@@ -334,6 +351,10 @@ class Vehicle(Agent):
         distance_rest = self.location_offset + distance - self.location.length
 
         if distance_rest > 0:
+            # first check if current object is bridge
+            if isinstance(self.location, Bridge):
+                # update the number of vehicles passing that bridge in this step
+                self.location.vehicles_passing += 1
             # go to the next object
             self.drive_to_next(distance_rest)
         else:
@@ -383,7 +404,7 @@ class Vehicle(Agent):
                 bridge_name = next_infra.get_name()
                 # Get location of current object
                 prev_x_loc = self.location.pos[0]
-                # Get location of next objec
+                # Get location of next object
                 next_x_loc = next_infra.pos[0]
                 # Check if the bridge is L and if the next location is more east than the current location
                 if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
@@ -396,11 +417,14 @@ class Vehicle(Agent):
                 else:
                     # If this bridge shouldn't be skipped, continue
                     pass
+                # Get the waiting time if there is any
                 self.waiting_time = next_infra.get_delay_time()
                 if self.waiting_time > 0:
                     # arrive at the bridge and wait
                     self.arrive_at_next(next_infra, 0)
                     self.state = Vehicle.State.WAIT
+                    # update amount of vehicles waiting at bridge
+                    self.location.vehicles_waiting += 1
                     return
             # else, continue driving
         # if removed is True set distance to zero
@@ -476,8 +500,9 @@ class CargoVehicle(Vehicle):
     travel_distance: float
 
     """
-
-    pass
+    def __init__(self, unique_id, model, generated_by, location_offset=0, path_ids=None):
+        super().__init__(unique_id, model, generated_by, location_offset, path_ids)
+        self.type = 'Cargo truck'
 
 
 # ---------------------------------------------------------------
@@ -528,4 +553,6 @@ class PersonalVehicle(Vehicle):
 
     """
 
-    pass
+    def __init__(self, unique_id, model, generated_by, location_offset=0, path_ids=None):
+        super().__init__(unique_id, model, generated_by, location_offset, path_ids)
+        self.type = 'Personal truck'
