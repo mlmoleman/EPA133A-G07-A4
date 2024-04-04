@@ -377,19 +377,12 @@ class Vehicle(Agent):
                 self.arrive_at_next(next_infra, 0)
                 # retrieve the time step
                 self.removed_at_step = self.model.schedule.steps
-                # compute the driving time, which equals the difference between the time step when generated and removed
-                self.driving_time = self.removed_at_step - self.generated_at_step
-                # if driving_time is equal to zero -> set to 1
-                if self.driving_time == 0:
-                    self.driving_time = 1
+                # compute the driving time, which equals 1 plus the difference between the time step when generated and removed
+                self.driving_time = 1 + (self.removed_at_step - self.generated_at_step)
                 # add driving time to list of driving times for all trucks in model class
                 self.model.driving_time_of_trucks.append(self.driving_time)
                 # compute the netto speed, depends on travel distance of path
                 self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
-                print('travel_distance:', self.travel_distance)
-                print('driving_time:', self.driving_time)
-                print('path', self.path_ids)
-                print('speed', self.net_speed)
                 # add netto speed to list of speed for all trucks in model class
                 self.model.speed_of_trucks.append(self.net_speed)
                 # remove vehicle from location

@@ -24,5 +24,7 @@ for i in range(run_length):
 
 # retrieve model data
 model_data = sim_model.datacollector.get_model_vars_dataframe()
+agent_data = sim_model.datacollector.get_agent_vars_dataframe()
 # and put in CSV
 model_data.to_csv("../data/model_data.csv")
+agent_data.to_csv('../data/agent_data.csv')

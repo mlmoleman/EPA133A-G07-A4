@@ -24,10 +24,16 @@ def create_links(df, indexes):
         type_obj = df.iloc[i, df.columns.get_indexer(['type'])].values
         # Determine the type of the previous object
         type_prev_obj = df.iloc[i-1, df.columns.get_indexer(['type'])].values
-        # Check if the lat and lon of this object and the previous object and are not the same
-        # AND if the type of this object and the previous object are not both equal to 'sourcesink'
-        if (not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink'
-                and not (type_prev_obj == 'sourcesink' and type_obj == 'intersection')):
+        # Determine on which road the object is located
+        road_obj = df.iloc[i, df.columns.get_indexer(['road'])].values
+        # Determine on which road the previous object is located
+        road_prev_obj = df.iloc[i-1, df.columns.get_indexer(['road'])].values
+        # Check if the lat and lon of this object and the previous object are not the same
+        # AND if the roads are both the same
+        if not (lat == lat_prev and lon == lon_prev) and road_obj == road_prev_obj:
+        # # AND if the type of this object and the previous object are not both equal to 'sourcesink'
+        # if (not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink'
+        #         and not (type_prev_obj == 'sourcesink' and type_obj == 'intersection')):
             # if that is the case insert link
             # determine the length of the link by calculating the difference in km of the objects
             # and substracting half of the length of the objects.

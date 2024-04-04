@@ -441,10 +441,7 @@ class BangladeshModel(Model):
             shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
             # assign value to shortest path dictionary, which is a tuple of the path and length of the path
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
-            # print("path", shortest_path, "length:",shortest_path_length)
-            print('path:', shortest_path)
-            print('first edge', (shortest_path[0], shortest_path[1]), 'exists:', self.G.has_edge(shortest_path[0], shortest_path[1]))
-            print('last edge', (shortest_path[-2], shortest_path[-1]), 'exists:', self.G.has_edge(shortest_path[-2], shortest_path[-1]))
+            # print('path:', shortest_path, 'length:', shortest_path_length)
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
