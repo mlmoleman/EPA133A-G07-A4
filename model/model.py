@@ -141,7 +141,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict: defaultdict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}, routing_type: str = "shortest",
+                 collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
                  flood_lever=False, cyclone_lever=False):
 
         self.flood_lever = flood_lever
