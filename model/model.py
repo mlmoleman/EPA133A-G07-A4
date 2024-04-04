@@ -169,8 +169,8 @@ class BangladeshModel(Model):
         self.speed_of_trucks = []  # initialise list for speed for trucks
         self.collapsed_conditions_dict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}
 
-        self.n_cargo = 2
-        self.n_personal = 2
+        self.n_cargo = 1
+        self.n_personal = 1
 
 
 
@@ -516,8 +516,9 @@ class BangladeshModel(Model):
         """
         Advance the simulation by one step.
         """
-        self.generate_cargo()
-        self.generate_personal()
+        if self.schedule.steps % 5 ==0:
+            self.generate_cargo()
+            self.generate_personal()
         self.datacollector.collect(self)
         self.schedule.step()
 

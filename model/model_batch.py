@@ -14,8 +14,8 @@ from mesa import batch_run
 scenario_lst = pd.read_csv('../data/scenarios.csv')
 # print(scenario_lst)
 
-# Change scenario number to run different experiments, possible scenario: 0, 1, 2, 3, 4
-scenario: int = 4
+# Change scenario number to run different experiments, possible scenario: 0, 1, 2
+scenario: int = 0
 
 # get the probabilities for each condition
 prob = scenario_lst.iloc[scenario].to_dict()
@@ -29,13 +29,13 @@ results = batch_run(
     iterations=10,
     max_steps=7200,
     number_processes=1,
-    data_collection_period=1,
+    data_collection_period=5,
     display_progress=True)
 
 # Convert results to dataframe
 df_results = pd.DataFrame(results)
 # Convert dataframe to CSV-file
-df_results.to_csv("../experiment/scenario"+str(scenario)+".csv")
+df_results.to_csv("../experiment/scenario"+str(scenario)+"FALSEFALSE.csv")
 
 # # Loop over the scenarios
 # for dictionary in collapse_dict:

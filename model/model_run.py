@@ -8,8 +8,8 @@ from model import BangladeshModel
 # ---------------------------------------------------------------
 
 # run time 5 x 24 hours; 1 tick 1 minute
-run_length = 5 * 24 * 60
-# run_length = 100
+# run_length = 5 * 24 * 60
+run_length = 100
 
 seed = 1234567
 
