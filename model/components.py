@@ -386,6 +386,10 @@ class Vehicle(Agent):
                 self.model.driving_time_of_trucks.append(self.driving_time)
                 # compute the netto speed, depends on travel distance of path
                 self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
+                print('travel_distance:', self.travel_distance)
+                print('driving_time:', self.driving_time)
+                print('path', self.path_ids)
+                print('speed', self.net_speed)
                 # add netto speed to list of speed for all trucks in model class
                 self.model.speed_of_trucks.append(self.net_speed)
                 # remove vehicle from location

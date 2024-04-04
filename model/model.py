@@ -375,9 +375,9 @@ class BangladeshModel(Model):
         # define the model metrics we want to extract for each model run
         agent_metrics = {
                         "Type of agent": lambda a: a.type,
-                        "Number of vehicles passing bridge": lambda a: a.vehicles_passing if isinstance(a, Bridge) else None,
-                        "Number of vehicles waiting at bridge": lambda a: a.vehicles_waiting if isinstance(a, Bridge) else None,
-                        "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Infra) else None,
+                        "Number of Cargo vehicles passing bridge": lambda a: a.vehicles_passing if isinstance(a, Bridge) else None,
+                        "Number of Cargo vehicles waiting at bridge": lambda a: a.vehicles_waiting if isinstance(a, Bridge) else None,
+                        "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Bridge) else None,
                         "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
                         }
 
@@ -442,6 +442,9 @@ class BangladeshModel(Model):
             # assign value to shortest path dictionary, which is a tuple of the path and length of the path
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
             # print("path", shortest_path, "length:",shortest_path_length)
+            print('path:', shortest_path)
+            print('first edge', (shortest_path[0], shortest_path[1]), 'exists:', self.G.has_edge(shortest_path[0], shortest_path[1]))
+            print('last edge', (shortest_path[-2], shortest_path[-1]), 'exists:', self.G.has_edge(shortest_path[-2], shortest_path[-1]))
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
