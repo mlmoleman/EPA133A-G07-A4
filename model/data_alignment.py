@@ -15,11 +15,9 @@ def data_network():
     # add intersection to column
     df_bridges['intersec_to'] = None
     # reposition columns
-    df_bridges = df_bridges[['road', 'km', 'type', 'model_type', 'name',
-                             'length', 'condition', 'lat', 'lon', 'intersec_to',
-                             'Total Cargo', 'Total People', 'Total Transport',
-                             'Total Transport Weight', 'SourceSink Cargo Weight',
-                             'SourceSink People Weight']]
+    df_bridges = df_bridges[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon',
+                             'intersec_to', 'FLOODCAT', 'CycloonCat', 'Total Cargo', 'Total People', 'Total Transport',
+                             'Total Transport Weight', 'SourceSink Cargo Weight', 'SourceSink People Weight']]
 
     # import intersections data
     df_intersections = pd.read_csv('../data/intersections.csv')
@@ -32,16 +30,14 @@ def data_network():
     # create condition
     df_intersections['condition'] = None
     # create flow columns
-    new_intersection_columns = ['Total Cargo', 'Total People', 'Total Transport',
-                                'Total Transport Weight', 'SourceSink Cargo Weight',
-                                'SourceSink People Weight']
+    new_intersection_columns = ['FLOODCAT', 'CycloonCat', 'Total Cargo', 'Total People', 'Total Transport',
+                                'Total Transport Weight', 'SourceSink Cargo Weight', 'SourceSink People Weight']
     for column in new_intersection_columns:
         df_intersections[column] = np.nan
         # format columns
-    df_intersections = df_intersections[['road', 'km', 'type', 'model_type', 'name',
-                                         'length', 'condition', 'lat', 'lon', 'intersec_to',
-                                         'Total Cargo', 'Total People', 'Total Transport',
-                                         'Total Transport Weight', 'SourceSink Cargo Weight',
+    df_intersections = df_intersections[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat',
+                                         'lon', 'intersec_to', 'FLOODCAT', 'CycloonCat', 'Total Cargo', 'Total People',
+                                         'Total Transport', 'Total Transport Weight', 'SourceSink Cargo Weight',
                                          'SourceSink People Weight']]
 
     # get all intersected roads
