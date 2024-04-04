@@ -377,6 +377,7 @@ class BangladeshModel(Model):
                         "Type of agent": lambda a: a.type,
                         "Latitude brigde": lambda a: a.latitude if isinstance(a, Bridge) else None,
                         "Longitude bridge": lambda a: a.longitude if isinstance(a, Bridge) else None,
+                        "Name of bridge": lambda a: a.name if isinstance(a, Bridge) else None,
                         "Number of Cargo vehicles passing bridge": lambda a: a.cargo_vehicles_passing if isinstance(a, Bridge) else None,
                         "Number of Cargo vehicles waiting at bridge": lambda a: a.cargo_vehicles_waiting if isinstance(a, Bridge) else None,
                         "Number of Personal vehicles passing bridge": lambda a: a.personal_vehicles_passing if isinstance(a, Bridge) else None,
