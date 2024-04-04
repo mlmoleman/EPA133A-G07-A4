@@ -11,6 +11,7 @@ from statistics import mean
 from mesa.datacollection import DataCollector
 import networkx as nx
 import warnings
+from cachetools import cached, LFUCache
 warnings.simplefilter(action='ignore', category=FutureWarning)
 # ---------------------------------------------------------------
 
@@ -142,10 +143,10 @@ class BangladeshModel(Model):
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
                  collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
-                 flood_lever=False, cyclone_lever=False):
+                 hazard_lever=False):
 
-        self.flood_lever = flood_lever
-        self.cyclone_lever = cyclone_lever
+        self.flood_lever = hazard_lever
+        self.cyclone_lever = hazard_lever
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -400,14 +401,7 @@ class BangladeshModel(Model):
                 break
         return self.path_ids_dict[source, sink]
 
-    def get_shortest_path_route(self, source, agent):
-        """
-        gives the shortest path between an origin and destination,
-        based on bridge network defined using NetworkX library,
-        and adds this path to path_ids_dict
-        """
-        # call network
-        network = self.G
+    def get_sink(self, source, agent):
         # determine the sink to calculate the shortest path to
         while True:
             # check if the agent is an instance of CargoVehicle
@@ -434,6 +428,17 @@ class BangladeshModel(Model):
             # otherwise determine sink again
             if sink is not source:
                 break
+        return sink
+
+    @cached(cache=LFUCache(maxsize=128))
+    def get_shortest_path_route(self, source, sink):
+        """
+        gives the shortest path between an origin and destination,
+        based on bridge network defined using NetworkX library,
+        and adds this path to path_ids_dict
+        """
+        # call network
+        network = self.G
         # the dictionary key is the origin, destination combination:
         key = source, sink
         # first, check if there already is a shortest path:

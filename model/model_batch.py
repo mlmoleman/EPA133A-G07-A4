@@ -15,11 +15,11 @@ scenario_lst = pd.read_csv('../data/scenarios.csv')
 # print(scenario_lst)
 
 # Change scenario number to run different experiments, possible scenario: 0, 1, 2
-scenario: int = 0
+scenario: int = 1
 
 # get the probabilities for each condition
 prob = scenario_lst.iloc[scenario].to_dict()
-params = {"collapse_dict": [prob], "routing_type": "shortest"}
+params = {"collapse_dict": [prob], "routing_type": "shortest", "hazard_lever": [True, False]}
 # print(params)
 
 # Settings of batch runner
