@@ -170,7 +170,7 @@ class BangladeshModel(Model):
         self.collapsed_conditions_dict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}
 
         self.n_cargo = 2
-        self.n_personal = 1
+        self.n_personal = 2
 
 
 
@@ -494,7 +494,6 @@ class BangladeshModel(Model):
                     source.truck_counter += 1
                     source.vehicle_count += 1
                     source.vehicle_generated_flag = True
-                    print('Personal truck is generated at', source)
             except Exception as e:
                 print("Oops!", e.__class__, "occurred.")
 
