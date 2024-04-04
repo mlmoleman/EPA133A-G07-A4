@@ -345,7 +345,7 @@ class BangladeshModel(Model):
                     self.sinks.append(agent.unique_id)
                     self.sourcesinks.append(agent)
                 elif model_type == 'bridge':
-                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'], row['FloodImpact'], row['CycloonImpact'])
+                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'], row['FloodImpact'], row['CycloonImpact'], row['lat'], row['lon'])
                 elif model_type == 'link':
                     agent = Link(row['id'], self, row['length'], name, row['road'])
                 elif model_type == 'intersection':
@@ -375,8 +375,12 @@ class BangladeshModel(Model):
         # define the model metrics we want to extract for each model run
         agent_metrics = {
                         "Type of agent": lambda a: a.type,
-                        "Number of Cargo vehicles passing bridge": lambda a: a.vehicles_passing if isinstance(a, Bridge) else None,
-                        "Number of Cargo vehicles waiting at bridge": lambda a: a.vehicles_waiting if isinstance(a, Bridge) else None,
+                        "Latitude brigde": lambda a: a.latitude if isinstance(a, Bridge) else None,
+                        "Longitude bridge": lambda a: a.longitude if isinstance(a, Bridge) else None,
+                        "Number of Cargo vehicles passing bridge": lambda a: a.cargo_vehicles_passing if isinstance(a, Bridge) else None,
+                        "Number of Cargo vehicles waiting at bridge": lambda a: a.cargo_vehicles_waiting if isinstance(a, Bridge) else None,
+                        "Number of Personal vehicles passing bridge": lambda a: a.personal_vehicles_passing if isinstance(a, Bridge) else None,
+                        "Number of Personal vehicles waiting at bridge": lambda a: a.personal_vehicles_waiting if isinstance(a, Bridge) else None,
                         "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Bridge) else None,
                         "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
                         }

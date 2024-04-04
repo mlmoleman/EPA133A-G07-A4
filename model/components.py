@@ -63,7 +63,7 @@ class Bridge(Infra):
     """
 
     def __init__(self, unique_id, model, length=0,
-                 name='Unknown', road_name='Unknown', condition='Unknown', flood_factor=1, cyclone_factor=1):
+                 name='Unknown', road_name='Unknown', condition='Unknown', flood_factor=1, cyclone_factor=1, latitude=None, longitude=None):
         super().__init__(unique_id, model, length, name, road_name)
 
         self.condition = condition
@@ -82,8 +82,12 @@ class Bridge(Infra):
         self.collapsed = False
         self.delay_time = 0
         self.type = 'Bridge'
-        self.vehicles_passing = 0
-        self.vehicles_waiting = 0
+        self.latitude = latitude
+        self.longitude = longitude
+        self.cargo_vehicles_passing = 0
+        self.cargo_vehicles_waiting = 0
+        self.personal_vehicles_passing = 0
+        self.personal_vehicles_waiting = 0
 
         # self.flood_factor = flood_factor
         # self.cyclone_factor = cyclone_factor
@@ -122,9 +126,11 @@ class Bridge(Infra):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
         # Set the vehicles that passed back to 0
-        self.vehicles_passing = 0
+        self.cargo_vehicles_passing = 0
+        self.personal_vehicles_passing = 0
         # Set the vehicles that are waiting to 0
-        self.vehicles_waiting = 0
+        self.cargo_vehicles_waiting = 0
+        self.personal_vehicles_waiting = 0
 
 
 # ---------------------------------------------------------------
@@ -322,6 +328,63 @@ class Vehicle(Agent):
         self.path_ids = random_route[0]
         self.travel_distance = random_route[1]
 
+
+
+
+
+# EOF -----------------------------------------------------------
+
+# ---------------------------------------------------------------
+class CargoVehicle(Vehicle):
+    """
+
+    Attributes
+    __________
+    speed: float
+        speed in meter per minute (m/min)
+
+    step_time: int
+        the number of minutes (or seconds) a tick represents
+        Used as a base to change unites
+
+    state: Enum (DRIVE | WAIT)
+        state of the vehicle
+
+    location: Infra
+        reference to the Infra where the vehicle is located
+
+    location_offset: float
+        the location offset in meters relative to the starting point of
+        the Infra, which has a certain length
+        i.e. location_offset < length
+
+    path_ids: Series
+        the whole path (origin and destination) where the vehicle shall drive
+        It consists the Infras' uniques IDs in a sequential order
+
+    location_index: int
+        a pointer to the current Infra in "path_ids" (above)
+        i.e. the id of self.location is self.path_ids[self.location_index]
+
+    waiting_time: int
+        the time the vehicle needs to wait
+
+    generated_at_step: int
+        the timestamp (number of ticks) that the vehicle is generated
+
+    removed_at_step: int
+        the timestamp (number of ticks) that the vehicle is removed
+
+    driving_time: float
+        the driving time on the road for a vehicle
+
+    travel_distance: float
+
+    """
+    def __init__(self, unique_id, model, generated_by, location_offset=0, path_ids=None):
+        super().__init__(unique_id, model, generated_by, location_offset, path_ids)
+        self.type = 'Cargo truck'
+
     def step(self):
         """
         Vehicle waits or drives at each step
@@ -332,8 +395,8 @@ class Vehicle(Agent):
                 self.waited_at = self.location
                 self.state = Vehicle.State.DRIVE
             else:
-                # Continue waiting and update n vehicles waiting
-                self.location.vehicles_waiting += 1
+                # Continue waiting and update cargo vehicles waiting
+                self.location.cargo_vehicles_waiting += 1
 
         if self.state == Vehicle.State.DRIVE:
             self.drive()
@@ -341,7 +404,7 @@ class Vehicle(Agent):
         """
         To print the vehicle trajectory at each step
         """
-        #print(self)
+        # print(self)
 
     def drive(self):
         # the distance that vehicle drives in a tick
@@ -353,8 +416,186 @@ class Vehicle(Agent):
         if distance_rest > 0:
             # first check if current object is bridge
             if isinstance(self.location, Bridge):
-                # update the number of vehicles passing that bridge in this step
-                self.location.vehicles_passing += 1
+                # update the number of cargo vehicles passing that bridge in this step
+                self.location.cargo_vehicles_passing += 1
+            # go to the next object
+            self.drive_to_next(distance_rest)
+        else:
+            # remain on the same object
+            self.location_offset += distance
+
+    def drive_to_next(self, distance):
+        """
+        vehicle shall move to the next object with the given distance
+        """
+
+        self.location_index += 1
+
+        next_id = self.path_ids[self.location_index]
+        next_infra = self.model.schedule._agents[next_id]  # Access to protected member _agents
+
+        if next_id == self.path_ids[-1]:
+            if isinstance(next_infra, Sink):
+                # arrive at the sink
+                self.arrive_at_next(next_infra, 0)
+                # retrieve the time step
+                self.removed_at_step = self.model.schedule.steps
+                # compute the driving time, which equals 1 plus the difference between the time step when generated and removed
+                self.driving_time = 1 + (self.removed_at_step - self.generated_at_step)
+                # add driving time to list of driving times for all trucks in model class
+                self.model.driving_time_of_trucks.append(self.driving_time)
+                # compute the netto speed, depends on travel distance of path
+                self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
+                # add netto speed to list of speed for all trucks in model class
+                self.model.speed_of_trucks.append(self.net_speed)
+                # remove vehicle from location
+                self.location.remove(self)
+                # then removed to True
+                self.removed = True
+                return
+        else:
+            if isinstance(next_infra, Sink):
+                # drive to next object:
+                self.drive_to_next(distance - next_infra.length)
+                return
+
+            elif isinstance(next_infra, Bridge):
+                # Get bridge name to check for L and R side
+                bridge_name = next_infra.get_name()
+                # Get location of current object
+                prev_x_loc = self.location.pos[0]
+                # Get location of next object
+                next_x_loc = next_infra.pos[0]
+                # Check if the bridge is L and if the next location is more east than the current location
+                if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
+                    # Skip L bridge
+                    self.drive_to_next(distance)
+                # Check if the bridge is R and if the next location is more west than the current location
+                elif bridge_name[-2:] == '(R' and prev_x_loc > next_x_loc:
+                    # Skip R bridge
+                    self.drive_to_next(distance)
+                else:
+                    # If this bridge shouldn't be skipped, continue
+                    pass
+                # Get the waiting time if there is any
+                self.waiting_time = next_infra.get_delay_time()
+                if self.waiting_time > 0:
+                    # arrive at the bridge and wait
+                    self.arrive_at_next(next_infra, 0)
+                    self.state = Vehicle.State.WAIT
+                    # update amount of cargo vehicles waiting at bridge
+                    self.location.cargo_vehicles_waiting += 1
+                    return
+            # else, continue driving
+        # if removed is True set distance to zero
+        if self.removed:
+            distance = 0
+
+        if next_infra.length > distance:
+            # stay on this object:
+            self.arrive_at_next(next_infra, distance)
+        else:
+            # drive to next object:
+            self.drive_to_next(distance - next_infra.length)
+
+    def arrive_at_next(self, next_infra, location_offset):
+        """
+        Arrive at next_infra with the given location_offset
+        """
+
+        self.location.vehicle_count -= 1
+        self.location = next_infra
+
+        self.location_offset = location_offset
+
+        self.location.vehicle_count += 1
+
+
+# ---------------------------------------------------------------
+class PersonalVehicle(Vehicle):
+    """
+
+    Attributes
+    __________
+    speed: float
+        speed in meter per minute (m/min)
+
+    step_time: int
+        the number of minutes (or seconds) a tick represents
+        Used as a base to change unites
+
+    state: Enum (DRIVE | WAIT)
+        state of the vehicle
+
+    location: Infra
+        reference to the Infra where the vehicle is located
+
+    location_offset: float
+        the location offset in meters relative to the starting point of
+        the Infra, which has a certain length
+        i.e. location_offset < length
+
+    path_ids: Series
+        the whole path (origin and destination) where the vehicle shall drive
+        It consists the Infras' uniques IDs in a sequential order
+
+    location_index: int
+        a pointer to the current Infra in "path_ids" (above)
+        i.e. the id of self.location is self.path_ids[self.location_index]
+
+    waiting_time: int
+        the time the vehicle needs to wait
+
+    generated_at_step: int
+        the timestamp (number of ticks) that the vehicle is generated
+
+    removed_at_step: int
+        the timestamp (number of ticks) that the vehicle is removed
+
+    driving_time: float
+        the driving time on the road for a vehicle
+
+    travel_distance: float
+
+    """
+
+    def __init__(self, unique_id, model, generated_by, location_offset=0, path_ids=None):
+        super().__init__(unique_id, model, generated_by, location_offset, path_ids)
+        self.type = 'Personal truck'
+
+    def step(self):
+        """
+        Vehicle waits or drives at each step
+        """
+        if self.state == Vehicle.State.WAIT:
+            self.waiting_time = max(self.waiting_time - 1, 0)
+            if self.waiting_time == 0:
+                self.waited_at = self.location
+                self.state = Vehicle.State.DRIVE
+            else:
+                # Continue waiting and update personal vehicles waiting
+                self.location.personal_vehicles_waiting += 1
+
+        if self.state == Vehicle.State.DRIVE:
+            self.drive()
+
+        """
+        To print the vehicle trajectory at each step
+        """
+        # print(self)
+
+    def drive(self):
+        # the distance that vehicle drives in a tick
+        # speed is global now: can change to instance object when individual speed is needed
+        distance = Vehicle.speed * Vehicle.step_time
+
+        distance_rest = self.location_offset + distance - self.location.length
+
+        if distance_rest > 0:
+            # first check if current object is bridge
+            if isinstance(self.location, Bridge):
+                # update the number of personal vehicles passing that bridge in this step
+                self.location.personal_vehicles_passing += 1
             # go to the next object
             self.drive_to_next(distance_rest)
         else:
@@ -421,7 +662,7 @@ class Vehicle(Agent):
                     self.arrive_at_next(next_infra, 0)
                     self.state = Vehicle.State.WAIT
                     # update amount of vehicles waiting at bridge
-                    self.location.vehicles_waiting += 1
+                    self.location.personal_vehicles_waiting += 1
                     return
             # else, continue driving
         # if removed is True set distance to zero
@@ -446,110 +687,3 @@ class Vehicle(Agent):
         self.location_offset = location_offset
 
         self.location.vehicle_count += 1
-
-
-# EOF -----------------------------------------------------------
-
-# ---------------------------------------------------------------
-class CargoVehicle(Vehicle):
-    """
-
-    Attributes
-    __________
-    speed: float
-        speed in meter per minute (m/min)
-
-    step_time: int
-        the number of minutes (or seconds) a tick represents
-        Used as a base to change unites
-
-    state: Enum (DRIVE | WAIT)
-        state of the vehicle
-
-    location: Infra
-        reference to the Infra where the vehicle is located
-
-    location_offset: float
-        the location offset in meters relative to the starting point of
-        the Infra, which has a certain length
-        i.e. location_offset < length
-
-    path_ids: Series
-        the whole path (origin and destination) where the vehicle shall drive
-        It consists the Infras' uniques IDs in a sequential order
-
-    location_index: int
-        a pointer to the current Infra in "path_ids" (above)
-        i.e. the id of self.location is self.path_ids[self.location_index]
-
-    waiting_time: int
-        the time the vehicle needs to wait
-
-    generated_at_step: int
-        the timestamp (number of ticks) that the vehicle is generated
-
-    removed_at_step: int
-        the timestamp (number of ticks) that the vehicle is removed
-
-    driving_time: float
-        the driving time on the road for a vehicle
-
-    travel_distance: float
-
-    """
-    def __init__(self, unique_id, model, generated_by, location_offset=0, path_ids=None):
-        super().__init__(unique_id, model, generated_by, location_offset, path_ids)
-        self.type = 'Cargo truck'
-
-
-# ---------------------------------------------------------------
-class PersonalVehicle(Vehicle):
-    """
-
-    Attributes
-    __________
-    speed: float
-        speed in meter per minute (m/min)
-
-    step_time: int
-        the number of minutes (or seconds) a tick represents
-        Used as a base to change unites
-
-    state: Enum (DRIVE | WAIT)
-        state of the vehicle
-
-    location: Infra
-        reference to the Infra where the vehicle is located
-
-    location_offset: float
-        the location offset in meters relative to the starting point of
-        the Infra, which has a certain length
-        i.e. location_offset < length
-
-    path_ids: Series
-        the whole path (origin and destination) where the vehicle shall drive
-        It consists the Infras' uniques IDs in a sequential order
-
-    location_index: int
-        a pointer to the current Infra in "path_ids" (above)
-        i.e. the id of self.location is self.path_ids[self.location_index]
-
-    waiting_time: int
-        the time the vehicle needs to wait
-
-    generated_at_step: int
-        the timestamp (number of ticks) that the vehicle is generated
-
-    removed_at_step: int
-        the timestamp (number of ticks) that the vehicle is removed
-
-    driving_time: float
-        the driving time on the road for a vehicle
-
-    travel_distance: float
-
-    """
-
-    def __init__(self, unique_id, model, generated_by, location_offset=0, path_ids=None):
-        super().__init__(unique_id, model, generated_by, location_offset, path_ids)
-        self.type = 'Personal truck'
