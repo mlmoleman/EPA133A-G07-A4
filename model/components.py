@@ -63,13 +63,25 @@ class Bridge(Infra):
     """
 
     def __init__(self, unique_id, model, length=0,
-                 name='Unknown', road_name='Unknown', condition='Unknown'):
+                 name='Unknown', road_name='Unknown', condition='Unknown', flood_factor=1, cyclone_factor=1):
         super().__init__(unique_id, model, length, name, road_name)
 
         self.condition = condition
-        self.collapse_chance = self.model.collapse_dict[self.condition]
+
+        if (self.model.flood_lever == True) & (self.model.cyclone_lever == False):
+            self.collapse_chance = self.model.collapse_dict[self.condition] * flood_factor
+        elif (self.model.flood_lever == False) & (self.model.cyclone_lever == True):
+            self.collapse_chance = self.model.collapse_dict[self.condition] * cyclone_factor
+        elif (self.model.flood_lever == True) & (self.model.cyclone_lever == True):
+            self.collapse_chance = self.model.collapse_dict[self.condition] * cyclone_factor * flood_factor
+        else:
+            self.collapse_chance = self.model.collapse_dict[self.condition]
+        # elif (self.model.flood_lever==True) & (self.model.flood_lever ==False):
         self.collapsed = False
         self.delay_time = 0
+
+        # self.flood_factor = flood_factor
+        # self.cyclone_factor = cyclone_factor
 
     def get_delay_time(self):
         if self.collapsed:
@@ -93,6 +105,7 @@ class Bridge(Infra):
 
     def collapse(self):
         """A bridge collapses according to its chance of collapsing."""
+
         if not self.collapsed and self.collapse_chance > self.random.random():
             self.collapsed = True
             self.model.collapsed_conditions_dict[self.condition] += 1
@@ -191,7 +204,9 @@ class SourceSink(Source, Sink):
     """
     Generates and removes trucks
     """
-    def __init__(self, unique_id, model, length=0, name='Unknown', road_name='Unknown', cargo_weight=None, cargo_cumsum=None, personal_weight=None, personal_cumsum=None):
+
+    def __init__(self, unique_id, model, length=0, name='Unknown', road_name='Unknown', cargo_weight=None,
+                 cargo_cumsum=None, personal_weight=None, personal_cumsum=None):
         super().__init__(unique_id, model, length, name, road_name)
         self.cargo_weight = cargo_weight
         self.cargo_cumsum = cargo_cumsum
@@ -279,9 +294,9 @@ class Vehicle(Agent):
 
     def __str__(self):
         return "Vehicle" + str(self.unique_id) + \
-               " +" + str(self.generated_at_step) + " -" + str(self.removed_at_step) + \
-               " " + str(self.state) + '(' + str(self.waiting_time) + ') ' + \
-               str(self.location) + '(' + str(self.location.vehicle_count) + ') ' + str(self.location_offset)
+            " +" + str(self.generated_at_step) + " -" + str(self.removed_at_step) + \
+            " " + str(self.state) + '(' + str(self.waiting_time) + ') ' + \
+            str(self.location) + '(' + str(self.location.vehicle_count) + ') ' + str(self.location_offset)
 
     def set_path(self):
         """
@@ -307,7 +322,7 @@ class Vehicle(Agent):
         """
         To print the vehicle trajectory at each step
         """
-        print(self)
+        # print(self)
 
     def drive(self):
         # the distance that vehicle drives in a tick
@@ -353,7 +368,7 @@ class Vehicle(Agent):
                 # remove vehicle from location
                 self.location.remove(self)
                 # then removed to True
-                self.removed=True
+                self.removed = True
                 return
         else:
             if isinstance(next_infra, Sink):
@@ -409,6 +424,7 @@ class Vehicle(Agent):
 
         self.location.vehicle_count += 1
 
+
 # EOF -----------------------------------------------------------
 
 # ---------------------------------------------------------------
@@ -460,6 +476,7 @@ class CargoVehicle(Vehicle):
     """
 
     pass
+
 
 # ---------------------------------------------------------------
 class PersonalVehicle(Vehicle):

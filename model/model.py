@@ -140,7 +140,11 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest"):
+                 collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
+                 flood_lever=False, cyclone_lever=False):
+
+        self.flood_lever = flood_lever
+        self.cyclone_lever = cyclone_lever
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -166,6 +170,8 @@ class BangladeshModel(Model):
 
         self.n_cargo = 2
         self.n_personal = 1
+
+
 
     def generate_network(self):
         """
@@ -261,10 +267,12 @@ class BangladeshModel(Model):
 
         # a list of names of roads to be generated
         roads = df['road'].unique().tolist()
-
         df_objects_all = []
         for road in roads:
             # Select all the objects on a particular road in the original order as in the cvs
+
+
+
             df_objects_on_road = df[df['road'] == road]
 
             if not df_objects_on_road.empty:
@@ -324,7 +332,7 @@ class BangladeshModel(Model):
                     self.sinks.append(agent.unique_id)
                     self.sourcesinks.append(agent)
                 elif model_type == 'bridge':
-                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'])
+                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'])#, row['FLOODCAT'], row['CycloonCat'])
                 elif model_type == 'link':
                     agent = Link(row['id'], self, row['length'], name, row['road'])
                 elif model_type == 'intersection':

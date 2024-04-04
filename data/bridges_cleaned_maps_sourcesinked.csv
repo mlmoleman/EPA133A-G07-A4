@@ -1,4 +1,4 @@
-,road,km,type,name,length,condition,lat,lon,model_type,FLOODCAT,CycloonCat,Total Cargo,Total People,Total Transport,Total Transport Weight,SourceSink Cargo Weight,SourceSink People Weight
+id,road,km,type,name,length,condition,lat,lon,model_type,FLOODCAT,CycloonCat,Total Cargo,Total People,Total Transport,Total Transport Weight,SourceSink Cargo Weight,SourceSink People Weight
 0,N1,0.0,sourcesink,Jatrabari - Int.with Z1101 (Left) (Left),0.0,,23.7060278,90.443333,sourcesink,,,7880.0,11356.0,19236.0,0.0121654593542364,0.048458908321649,0.0385735005893362
 1,N1,1.8,Box Culvert,.,11.3,A,23.69873866,90.4588610799999,bridge,0.0,2.0,,,,,,
 2,N1,2.4985,sourcesink,Int.with Z1101 - Signboard (Left) R111 (Left),0.0,,23.6973608,90.4616667,sourcesink,,,7880.0,11356.0,19236.0,0.0121654593542364,0.048458908321649,0.0385735005893362
