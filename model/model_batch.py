@@ -29,7 +29,7 @@ results = batch_run(
     iterations=10,
     max_steps=7200,
     number_processes=1,
-    data_collection_period=5,
+    data_collection_period=1,
     display_progress=True)
 
 # Convert results to dataframe

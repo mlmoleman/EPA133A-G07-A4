@@ -1,19 +1,38 @@
 import random
-
+from line_profiler import profile
+from line_profiler_pycharm import profile
 from mesa import Model
 from mesa.time import BaseScheduler
 from mesa.space import ContinuousSpace
-from components import Infra, Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle, CargoVehicle, PersonalVehicle
+from components import Infra, Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle, CargoVehicle, \
+    PersonalVehicle
 import pandas as pd
+from itertools import combinations
 import numpy as np
 from collections import defaultdict
 from statistics import mean
 from mesa.datacollection import DataCollector
 import networkx as nx
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
 # ---------------------------------------------------------------
 
+def SS_dict(model):
+    SS_list = []
+    for node in model.G.nodes:
+        if model.G.nodes[node]["typ"] == "sourcesink":
+            SS_list.append(node)
+
+    SS_combi = [np.sort(comb) for comb in combinations(SS_list, 2)]
+    shortest_paths_dict = {}
+    for comb in SS_combi:
+        shortest_paths_dict[(comb[0], comb[1])] = tuple(reversed(nx.single_source_dijkstra(model.G, comb[0], comb[1], weight='distance')))#[1]
+        shortest_paths_dict[(comb[1], comb[0])] = tuple(reversed(nx.single_source_dijkstra(model.G, comb[1], comb[0], weight='distance')))#[1]
+
+    return  shortest_paths_dict
 
 def get_steps(model):
     return model.schedule.steps
@@ -140,13 +159,14 @@ class BangladeshModel(Model):
 
     file_name = '../data/bridges_intersected_linked.csv'
 
+    @profile
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
                  collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
                  flood_lever=False, cyclone_lever=False):
 
         self.flood_lever = flood_lever
         self.cyclone_lever = cyclone_lever
-
+        self.drive_dict = {}
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
         self.schedule = BaseScheduler(self)
@@ -164,6 +184,8 @@ class BangladeshModel(Model):
 
         self.G = self.generate_network()  # generate network using networkx library
         self.generate_model()
+        self.SS_dict = SS_dict(self)
+
 
         self.driving_time_of_trucks = []  # initialise list for driving time of trucks
         self.speed_of_trucks = []  # initialise list for speed for trucks
@@ -172,8 +194,7 @@ class BangladeshModel(Model):
         self.n_cargo = 1
         self.n_personal = 1
 
-
-
+    @profile
     def generate_network(self):
         """
         generate the network used within the simulation model
@@ -256,6 +277,7 @@ class BangladeshModel(Model):
         # return network
         return self.G
 
+    @profile
     def generate_model(self):
         """
         generate the simulation model according to the csv file component information
@@ -277,14 +299,11 @@ class BangladeshModel(Model):
         df["FloodImpact"] = df["FLOODCAT"].map(flood_impact_weight)
         df["FloodImpact"] = df["FloodImpact"] + 1
 
-
         # a list of names of roads to be generated
         roads = df['road'].unique().tolist()
         df_objects_all = []
         for road in roads:
             # Select all the objects on a particular road in the original order as in the cvs
-
-
 
             df_objects_on_road = df[df['road'] == road]
 
@@ -340,55 +359,70 @@ class BangladeshModel(Model):
                     agent = Sink(row['id'], self, row['length'], name, row['road'])
                     self.sinks.append(agent.unique_id)
                 elif model_type == 'sourcesink':
-                    agent = SourceSink(row['id'], self, row['length'], name, row['road'], row['SourceSink Cargo Weight'], row['Cargo Weight cumsum'], row['SourceSink People Weight'], row['People Weight cumsum'])
+                    agent = SourceSink(row['id'], self, row['length'], name, row['road'],
+                                       row['SourceSink Cargo Weight'], row['Cargo Weight cumsum'],
+                                       row['SourceSink People Weight'], row['People Weight cumsum'])
                     self.sources.append(agent.unique_id)
                     self.sinks.append(agent.unique_id)
                     self.sourcesinks.append(agent)
                 elif model_type == 'bridge':
-                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'], row['FloodImpact'], row['CycloonImpact'], row['lat'], row['lon'])
+                    agent = Bridge(row['id'], self, row['length'], name, row['road'], row['condition'],
+                                   row['FloodImpact'], row['CycloonImpact'], row['lat'], row['lon'])
                 elif model_type == 'link':
                     agent = Link(row['id'], self, row['length'], name, row['road'])
                 elif model_type == 'intersection':
                     if not row['id'] in self.schedule._agents:
                         agent = Intersection(row['id'], self, row['length'], name, row['road'])
-
+                y = row['lat']
+                x = row['lon']
+                agent.pos = (x, y)
+                self.drive_dict[row['id']] = agent
 
                 if agent:
-                    self.schedule.add(agent)
-                    y = row['lat']
-                    x = row['lon']
-                    self.space.place_agent(agent, (x, y))
-                    agent.pos = (x, y)
+                    if model_type == 'bridge':
+
+                        self.schedule.add(agent)
+                        y = row['lat']
+                        x = row['lon']
+                        self.space.place_agent(agent, (x, y))
+                        agent.pos = (x, y)
         # define the model metrics we want to extract for each model run
         model_metrics = {
-                        "step": get_steps,
-                        "avg_delay": get_avg_delay,
-                        "avg_driving_time": get_avg_driving,
-                        "avg_speed": get_avg_speed,
-                        "avg_collapsed": get_tot_collapsed,
-                        "A_collapsed": get_A_collapsed,
-                        "B_collapsed": get_B_collapsed,
-                        "C_collapsed": get_C_collapsed,
-                        "D_collapsed": get_D_collapsed
-                        }
+            # "step": get_steps,
+            # "avg_delay": get_avg_delay,
+            # "avg_driving_time": get_avg_driving,
+            # "avg_speed": get_avg_speed,
+            # "avg_collapsed": get_tot_collapsed,
+            # "A_collapsed": get_A_collapsed,
+            # "B_collapsed": get_B_collapsed,
+            # "C_collapsed": get_C_collapsed,
+            # "D_collapsed": get_D_collapsed
+        }
 
         # define the model metrics we want to extract for each model run
+        # bridges_dict = self.schedule.agents
         agent_metrics = {
-                        "Type of agent": lambda a: a.type,
-                        "Latitude brigde": lambda a: a.latitude if isinstance(a, Bridge) else None,
-                        "Longitude bridge": lambda a: a.longitude if isinstance(a, Bridge) else None,
-                        "Name of bridge": lambda a: a.name if isinstance(a, Bridge) else None,
-                        "Number of Cargo vehicles passing bridge": lambda a: a.cargo_vehicles_passing if isinstance(a, Bridge) else None,
-                        "Number of Cargo vehicles waiting at bridge": lambda a: a.cargo_vehicles_waiting if isinstance(a, Bridge) else None,
-                        "Number of Personal vehicles passing bridge": lambda a: a.personal_vehicles_passing if isinstance(a, Bridge) else None,
-                        "Number of Personal vehicles waiting at bridge": lambda a: a.personal_vehicles_waiting if isinstance(a, Bridge) else None,
-                        "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Bridge) else None,
-                        "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
-                        }
+            # "Type of agent": lambda a: a.type,
+            # "Latitude brigde": lambda a: a.latitude if isinstance(a, Bridge) else None,
+            # "Longitude bridge": lambda a: a.longitude if isinstance(a, Bridge) else None,
+            "Name of bridge": lambda a: a.name if isinstance(a, Bridge) else None,
+            "Number of Cargo vehicles passing bridge": lambda a: a.cargo_vehicles_passing if isinstance(a,
+                                                                                                        Bridge) else None,
+            "Number of Cargo vehicles waiting at bridge": lambda a: a.cargo_vehicles_waiting if isinstance(a,
+                                                                                                           Bridge) else None,
+            # "Number of Personal vehicles passing bridge": lambda a: a.personal_vehicles_passing if isinstance(a,
+            #                                                                                                   Bridge) else None,
+            # "Number of Personal vehicles waiting at bridge": lambda a: a.personal_vehicles_waiting if isinstance(a,
+            #                                                                                                      Bridge) else None,
+            "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Bridge) else None,
+            # "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
+        }
+        # print(agent_metrics)
 
         # set up the data collector
-        self.datacollector = DataCollector(model_reporters=model_metrics, agent_reporters=agent_metrics)
+        self.datacollector = DataCollector( agent_reporters=agent_metrics)#model_reporters=model_metrics,
 
+    @profile
     def get_random_route(self, source):
         """
         pick up a random route given an origin
@@ -400,6 +434,7 @@ class BangladeshModel(Model):
                 break
         return self.path_ids_dict[source, sink]
 
+    @profile
     def get_shortest_path_route(self, source, agent):
         """
         gives the shortest path between an origin and destination,
@@ -407,7 +442,7 @@ class BangladeshModel(Model):
         and adds this path to path_ids_dict
         """
         # call network
-        network = self.G
+        # network = self.G
         # determine the sink to calculate the shortest path to
         while True:
             # check if the agent is an instance of CargoVehicle
@@ -436,25 +471,34 @@ class BangladeshModel(Model):
                 break
         # the dictionary key is the origin, destination combination:
         key = source, sink
+        # print(1)
+        return self.SS_dict[(source, sink)]
         # first, check if there already is a shortest path:
-        if key in self.shortest_path_dict.keys():
-            return self.shortest_path_dict[key]
-        else:
-            # compute shortest path between origin and destination based on distance (which is weight)
-            shortest_path = nx.shortest_path(network, source, sink, weight='distance')
-            # retrieve the length
-            shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
-            # assign value to shortest path dictionary, which is a tuple of the path and length of the path
-            self.shortest_path_dict[key] = shortest_path, shortest_path_length
-            # print('path:', shortest_path, 'length:', shortest_path_length)
-            return self.shortest_path_dict[key]
 
+        # if key in self.shortest_path_dict.keys():
+        #     print(2)
+        #     print(self.shortest_path_dict[key])
+        #     return self.shortest_path_dict[key]
+        # else:
+        #     # compute shortest path between origin and destination based on distance (which is weight)
+        #     shortest_path = nx.shortest_path(network, source, sink, weight='distance')
+        #     # retrieve the length
+        #     shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
+        #     # assign value to shortest path dictionary, which is a tuple of the path and length of the path
+        #     self.shortest_path_dict[key] = shortest_path, shortest_path_length
+        #     # print('path:', shortest_path, 'length:', shortest_path_length)
+        #     print(3)
+        #     print(self.shortest_path_dict[key])
+        #     return self.shortest_path_dict[key]
+
+    @profile
     def get_straight_route(self, source):
         """
         pick up a straight route given an origin
         """
         return self.path_ids_dict[source, None]
 
+    @profile
     def get_route(self, source, agent):
         if self.routing_type == "random":
             return self.get_random_route(source)
@@ -465,6 +509,7 @@ class BangladeshModel(Model):
         else:
             return self.get_straight_route(source)
 
+    @profile
     def generate_cargo(self):
         # generate the desired amount of cargo vehicles
         for n in range(self.n_cargo):
@@ -488,6 +533,7 @@ class BangladeshModel(Model):
             except Exception as e:
                 print("Oops!", e.__class__, "occurred.")
 
+    @profile
     def generate_personal(self):
         # generate the desired amount of personal vehicles
         for n in range(self.n_personal):
@@ -501,7 +547,8 @@ class BangladeshModel(Model):
             source = self.sourcesinks[ss]
             # try to create a PersonalVehicle, else exception error will be raised
             try:
-                agent = PersonalVehicle('Personal'+ str(source.unique_id) + '-' + str(source.truck_counter), self, source)
+                agent = PersonalVehicle('Personal' + str(source.unique_id) + '-' + str(source.truck_counter), self,
+                                        source)
                 if agent:
                     self.schedule.add(agent)
                     agent.set_path()
@@ -511,16 +558,16 @@ class BangladeshModel(Model):
             except Exception as e:
                 print("Oops!", e.__class__, "occurred.")
 
-
+    @profile
     def step(self):
         """
         Advance the simulation by one step.
         """
-        if self.schedule.steps % 5 ==0:
+        print(self.schedule.steps)
+        if self.schedule.steps % 5 == 0:
             self.generate_cargo()
             self.generate_personal()
         self.datacollector.collect(self)
         self.schedule.step()
-
 
 # EOF -----------------------------------------------------------

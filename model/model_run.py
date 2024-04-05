@@ -1,5 +1,6 @@
 from model import BangladeshModel
-
+from line_profiler import profile
+from line_profiler_pycharm import profile
 """
     Run simulation
     Print output at terminal
@@ -9,7 +10,7 @@ from model import BangladeshModel
 
 # run time 5 x 24 hours; 1 tick 1 minute
 # run_length = 5 * 24 * 60
-run_length = 100
+run_length = 1000
 
 seed = 1234567
 
@@ -23,8 +24,10 @@ for i in range(run_length):
     sim_model.step()
 
 # retrieve model data
-model_data = sim_model.datacollector.get_model_vars_dataframe()
+# model_data = sim_model.datacollector.get_model_vars_dataframe()
 agent_data = sim_model.datacollector.get_agent_vars_dataframe()
 # and put in CSV
-model_data.to_csv("../data/model_data.csv")
+# model_data.to_csv("../data/model_data.csv")
 agent_data.to_csv('../data/agent_data.csv')
+
+# print(agent_data)

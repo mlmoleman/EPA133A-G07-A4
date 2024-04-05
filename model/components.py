@@ -1,6 +1,7 @@
 from mesa import Agent
 from enum import Enum
-
+from line_profiler import profile
+from line_profiler_pycharm import profile
 
 # ---------------------------------------------------------------
 class Infra(Agent):
@@ -75,7 +76,7 @@ class Bridge(Infra):
         elif (self.model.flood_lever == True) & (self.model.cyclone_lever == True):
 
             self.collapse_chance = self.model.collapse_dict[self.condition] * cyclone_factor * flood_factor
-            print(self.collapse_chance)
+            # print(self.collapse_chance)
         else:
             self.collapse_chance = self.model.collapse_dict[self.condition]
         # elif (self.model.flood_lever==True) & (self.model.flood_lever ==False):
@@ -91,6 +92,8 @@ class Bridge(Infra):
 
         # self.flood_factor = flood_factor
         # self.cyclone_factor = cyclone_factor
+
+
 
     def get_delay_time(self):
         if self.collapsed:
@@ -111,7 +114,7 @@ class Bridge(Infra):
         Retrieve bridges name to choose between L/R bridge
         """
         return self.name
-
+    @profile
     def collapse(self):
         """A bridge collapses according to its chance of collapsing."""
 
@@ -385,6 +388,7 @@ class CargoVehicle(Vehicle):
         super().__init__(unique_id, model, generated_by, location_offset, path_ids)
         self.type = 'Cargo truck'
 
+    @profile
     def step(self):
         """
         Vehicle waits or drives at each step
@@ -432,7 +436,8 @@ class CargoVehicle(Vehicle):
         self.location_index += 1
 
         next_id = self.path_ids[self.location_index]
-        next_infra = self.model.schedule._agents[next_id]  # Access to protected member _agents
+        # print(next_id)
+        next_infra = self.model.drive_dict[next_id] # Access to protected member _agents
 
         if next_id == self.path_ids[-1]:
             if isinstance(next_infra, Sink):
@@ -463,6 +468,7 @@ class CargoVehicle(Vehicle):
                 # Get bridge name to check for L and R side
                 bridge_name = next_infra.get_name()
                 # Get location of current object
+                # print(self.location.pos[0])
                 prev_x_loc = self.location.pos[0]
                 # Get location of next object
                 next_x_loc = next_infra.pos[0]
@@ -610,7 +616,7 @@ class PersonalVehicle(Vehicle):
         self.location_index += 1
 
         next_id = self.path_ids[self.location_index]
-        next_infra = self.model.schedule._agents[next_id]  # Access to protected member _agents
+        next_infra = self.model.drive_dict[next_id]  # Access to protected member _agents
 
         if next_id == self.path_ids[-1]:
             if isinstance(next_infra, Sink):
