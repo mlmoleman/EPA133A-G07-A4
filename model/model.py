@@ -389,14 +389,14 @@ class BangladeshModel(Model):
         # define the model metrics we want to extract for each model run
         model_metrics = {
             # "step": get_steps,
-            # "avg_delay": get_avg_delay,
-            # "avg_driving_time": get_avg_driving,
-            # "avg_speed": get_avg_speed,
+            "avg_delay": get_avg_delay,
+            "avg_driving_time": get_avg_driving,
+            "avg_speed": get_avg_speed,
             # "avg_collapsed": get_tot_collapsed,
-            # "A_collapsed": get_A_collapsed,
-            # "B_collapsed": get_B_collapsed,
-            # "C_collapsed": get_C_collapsed,
-            # "D_collapsed": get_D_collapsed
+            "A_collapsed": get_A_collapsed,
+            "B_collapsed": get_B_collapsed,
+            "C_collapsed": get_C_collapsed,
+            "D_collapsed": get_D_collapsed
         }
 
         # define the model metrics we want to extract for each model run
@@ -415,7 +415,7 @@ class BangladeshModel(Model):
             # "Number of Personal vehicles waiting at bridge": lambda a: a.personal_vehicles_waiting if isinstance(a,
             #                                                                                                      Bridge) else None,
             "Total vehicle count per infra": lambda a: a.vehicle_count if isinstance(a, Bridge) else None,
-            # "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
+            "Collapsed": lambda a: a.collapsed if isinstance(a, Bridge) else None
         }
         # print(agent_metrics)
 
