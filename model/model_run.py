@@ -10,7 +10,7 @@ from line_profiler_pycharm import profile
 
 # run time 5 x 24 hours; 1 tick 1 minute
 # run_length = 5 * 24 * 60
-run_length = 7200
+run_length = 1000
 
 seed = 1234567
 

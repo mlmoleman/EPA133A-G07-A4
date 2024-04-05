@@ -129,7 +129,7 @@ class Bridge(Infra):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
         # Set the vehicles that passed back to 0
-        if self.model.schedule.step() % 5 == 0:
+        if self.model.schedule.steps % 6 == 0:
             self.cargo_vehicles_passing = 0
             self.personal_vehicles_passing = 0
             # Set the vehicles that are waiting to 0
