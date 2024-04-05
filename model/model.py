@@ -1,6 +1,6 @@
 import random
-from line_profiler import profile
-from line_profiler_pycharm import profile
+# from line_profiler import profile
+# # from line_profiler_pycharm import profile
 from mesa import Model
 from mesa.time import BaseScheduler
 from mesa.space import ContinuousSpace
@@ -159,7 +159,7 @@ class BangladeshModel(Model):
 
     file_name = '../data/bridges_intersected_linked.csv'
 
-    @profile
+    #@profile
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
                  collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
                  flood_lever=False, cyclone_lever=False):
@@ -194,7 +194,7 @@ class BangladeshModel(Model):
         self.n_cargo = 2
         self.n_personal = 0
 
-    @profile
+    #@profile
     def generate_network(self):
         """
         generate the network used within the simulation model
@@ -277,7 +277,7 @@ class BangladeshModel(Model):
         # return network
         return self.G
 
-    @profile
+    #@profile
     def generate_model(self):
         """
         generate the simulation model according to the csv file component information
@@ -422,7 +422,7 @@ class BangladeshModel(Model):
         # set up the data collector
         self.datacollector = DataCollector( agent_reporters=agent_metrics)#model_reporters=model_metrics,
 
-    @profile
+    #@profile
     def get_random_route(self, source):
         """
         pick up a random route given an origin
@@ -434,7 +434,7 @@ class BangladeshModel(Model):
                 break
         return self.path_ids_dict[source, sink]
 
-    @profile
+    #@profile
     def get_shortest_path_route(self, source, agent):
         """
         gives the shortest path between an origin and destination,
@@ -491,14 +491,14 @@ class BangladeshModel(Model):
         #     print(self.shortest_path_dict[key])
         #     return self.shortest_path_dict[key]
 
-    @profile
+    #@profile
     def get_straight_route(self, source):
         """
         pick up a straight route given an origin
         """
         return self.path_ids_dict[source, None]
 
-    @profile
+    #@profile
     def get_route(self, source, agent):
         if self.routing_type == "random":
             return self.get_random_route(source)
@@ -509,7 +509,7 @@ class BangladeshModel(Model):
         else:
             return self.get_straight_route(source)
 
-    @profile
+    #@profile
     def generate_cargo(self):
         # generate the desired amount of cargo vehicles
         for n in range(self.n_cargo):
@@ -533,7 +533,7 @@ class BangladeshModel(Model):
             except Exception as e:
                 print("Oops!", e.__class__, "occurred.")
 
-    @profile
+    #@profile
     def generate_personal(self):
         # generate the desired amount of personal vehicles
         for n in range(self.n_personal):
@@ -558,7 +558,7 @@ class BangladeshModel(Model):
             except Exception as e:
                 print("Oops!", e.__class__, "occurred.")
 
-    @profile
+    #@profile
     def step(self):
         """
         Advance the simulation by one step.

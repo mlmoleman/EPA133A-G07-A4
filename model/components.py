@@ -1,7 +1,7 @@
 from mesa import Agent
 from enum import Enum
 # from line_profiler import profile
-from line_profiler_pycharm import profile
+# from line_profiler_pycharm import profile
 
 # ---------------------------------------------------------------
 class Infra(Agent):
@@ -114,7 +114,7 @@ class Bridge(Infra):
         Retrieve bridges name to choose between L/R bridge
         """
         return self.name
-    @profile
+    #@profile
     def collapse(self):
         """A bridge collapses according to its chance of collapsing."""
 
@@ -129,7 +129,7 @@ class Bridge(Infra):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
         # Set the vehicles that passed back to 0
-        if self.model.schedule.steps % 6 == 0:
+        if self.model.schedule.steps % 61 == 0:
             self.cargo_vehicles_passing = 0
             self.personal_vehicles_passing = 0
             # Set the vehicles that are waiting to 0
@@ -389,7 +389,7 @@ class CargoVehicle(Vehicle):
         super().__init__(unique_id, model, generated_by, location_offset, path_ids)
         self.type = 'Cargo truck'
 
-    @profile
+    #@profile
     def step(self):
         """
         Vehicle waits or drives at each step
@@ -424,11 +424,13 @@ class CargoVehicle(Vehicle):
             if isinstance(self.location, Bridge):
                 # update the number of cargo vehicles passing that bridge in this step
                 self.location.cargo_vehicles_passing += 1
+
             # go to the next object
             self.drive_to_next(distance_rest)
         else:
             # remain on the same object
             self.location_offset += distance
+        return
 
     def drive_to_next(self, distance):
         """

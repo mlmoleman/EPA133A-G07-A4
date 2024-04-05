@@ -1,6 +1,6 @@
 from model import BangladeshModel
-from line_profiler import profile
-from line_profiler_pycharm import profile
+#from line_profiler import profile
+#from line_profiler_pycharm import profile
 """
     Run simulation
     Print output at terminal
