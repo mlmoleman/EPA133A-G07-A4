@@ -420,7 +420,7 @@ class BangladeshModel(Model):
         # print(agent_metrics)
 
         # set up the data collector
-        self.datacollector = DataCollector( agent_reporters=agent_metrics)#model_reporters=model_metrics,
+        self.datacollector = DataCollector(model_reporters=model_metrics, agent_reporters=agent_metrics)
 
     #@profile
     def get_random_route(self, source):
