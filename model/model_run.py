@@ -25,10 +25,17 @@ for i in range(run_length):
     sim_model.step()
 
 # retrieve model data
-# model_data = sim_model.datacollector.get_model_vars_dataframe()
+model_data = sim_model.datacollector.get_model_vars_dataframe()
 agent_data = sim_model.datacollector.get_agent_vars_dataframe()
 # and put in CSV
-# model_data.to_csv("../data/model_data.csv")
+model_data.to_csv("../data/model_data.csv")
 agent_data.to_csv('../data/agent_data.csv')
 
+
+
 # print(agent_data)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.lineplot(data = agent_data, x = 'Step', y = 'Number of Cargo vehicles passing bridge', hue = 'AgentID')
+plt.show()
