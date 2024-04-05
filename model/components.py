@@ -410,7 +410,7 @@ class CargoVehicle(Vehicle):
         """
         To print the vehicle trajectory at each step
         """
-        # print(self)
+        print(self)
 
     def drive(self):
         # the distance that vehicle drives in a tick
@@ -509,7 +509,7 @@ class CargoVehicle(Vehicle):
             if isinstance(self.location, Bridge):
                 # update the number of cargo vehicles passing that bridge in this step
                 self.location.cargo_vehicles_passing += 1
-                self.drive_to_next(distance - next_infra.length)
+            self.drive_to_next(distance - next_infra.length)
 
     def arrive_at_next(self, next_infra, location_offset):
         """
@@ -692,7 +692,7 @@ class PersonalVehicle(Vehicle):
             if isinstance(self.location, Bridge):
                 # update the number of personal vehicles passing that bridge in this step
                 self.location.personal_vehicles_passing += 1
-                self.drive_to_next(distance - next_infra.length)
+            self.drive_to_next(distance - next_infra.length)
 
     def arrive_at_next(self, next_infra, location_offset):
         """
