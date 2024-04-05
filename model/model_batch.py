@@ -15,27 +15,32 @@ scenario_lst = pd.read_csv('../data/scenarios.csv')
 # print(scenario_lst)
 
 # Change scenario number to run different experiments, possible scenario: 0, 1, 2
-scenario: int = 0
+for scenario_number in [0, 1, 2]:
+    scenario: int = scenario_number
 
-# get the probabilities for each condition
-prob = scenario_lst.iloc[scenario].to_dict()
-params = {"collapse_dict": [prob], "routing_type": "shortest"}
-# print(params)
+    # get the probabilities for each condition
+    prob = scenario_lst.iloc[scenario].to_dict()
+    if scenario == 0:
+        flood_par = [False]
+    else:
+        flood_par = [True,False]
+    params = {"collapse_dict": [prob], "routing_type": "shortest","flood_lever":flood_par}
+    # print(params)
 
-# Settings of batch runner
-results = batch_run(
-    BangladeshModel,
-    parameters=params,
-    iterations=10,
-    max_steps=7200,
-    number_processes=1,
-    data_collection_period=1,
-    display_progress=True)
+    # Settings of batch runner
+    results = batch_run(
+        BangladeshModel,
+        parameters=params,
+        iterations=5,
+        max_steps=7200,
+        number_processes=1,
+        data_collection_period=5,
+        display_progress=True)
 
-# Convert results to dataframe
-df_results = pd.DataFrame(results)
-# Convert dataframe to CSV-file
-df_results.to_csv("../experiment/scenario"+str(scenario)+"FALSEFALSE.csv")
+    # Convert results to dataframe
+    df_results = pd.DataFrame(results)
+    # Convert dataframe to CSV-file
+    df_results.to_csv("../experiment/Scenario" + str(scenario) + ".csv")
 
 # # Loop over the scenarios
 # for dictionary in collapse_dict:

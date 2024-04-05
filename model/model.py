@@ -191,8 +191,8 @@ class BangladeshModel(Model):
         self.speed_of_trucks = []  # initialise list for speed for trucks
         self.collapsed_conditions_dict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}
 
-        self.n_cargo = 1
-        self.n_personal = 1
+        self.n_cargo = 2
+        self.n_personal = 0
 
     @profile
     def generate_network(self):
@@ -563,7 +563,7 @@ class BangladeshModel(Model):
         """
         Advance the simulation by one step.
         """
-        print(self.schedule.steps)
+        # print(self.schedule.steps)
         if self.schedule.steps % 5 == 0:
             self.generate_cargo()
             self.generate_personal()

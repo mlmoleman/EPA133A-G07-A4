@@ -1,6 +1,6 @@
 from mesa import Agent
 from enum import Enum
-from line_profiler import profile
+# from line_profiler import profile
 from line_profiler_pycharm import profile
 
 # ---------------------------------------------------------------
@@ -68,7 +68,7 @@ class Bridge(Infra):
         super().__init__(unique_id, model, length, name, road_name)
 
         self.condition = condition
-
+        cyclone_factor = flood_factor
         if (self.model.flood_lever == True) & (self.model.cyclone_lever == False):
             self.collapse_chance = self.model.collapse_dict[self.condition] * flood_factor
         elif (self.model.flood_lever == False) & (self.model.cyclone_lever == True):
@@ -129,11 +129,12 @@ class Bridge(Infra):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
         # Set the vehicles that passed back to 0
-        self.cargo_vehicles_passing = 0
-        self.personal_vehicles_passing = 0
-        # Set the vehicles that are waiting to 0
-        self.cargo_vehicles_waiting = 0
-        self.personal_vehicles_waiting = 0
+        if self.model.schedule.step() % 5 == 0:
+            self.cargo_vehicles_passing = 0
+            self.personal_vehicles_passing = 0
+            # Set the vehicles that are waiting to 0
+            self.cargo_vehicles_waiting = 0
+            self.personal_vehicles_waiting = 0
 
 
 # ---------------------------------------------------------------
@@ -400,7 +401,8 @@ class CargoVehicle(Vehicle):
                 self.state = Vehicle.State.DRIVE
             else:
                 # Continue waiting and update cargo vehicles waiting
-                self.location.cargo_vehicles_waiting += 1
+                pass
+                # self.location.cargo_vehicles_waiting += 1
 
         if self.state == Vehicle.State.DRIVE:
             self.drive()
@@ -580,7 +582,8 @@ class PersonalVehicle(Vehicle):
                 self.state = Vehicle.State.DRIVE
             else:
                 # Continue waiting and update personal vehicles waiting
-                self.location.personal_vehicles_waiting += 1
+                pass
+                # self.location.personal_vehicles_waiting += 1
 
         if self.state == Vehicle.State.DRIVE:
             self.drive()
