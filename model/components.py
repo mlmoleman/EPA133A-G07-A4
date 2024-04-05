@@ -506,7 +506,10 @@ class CargoVehicle(Vehicle):
             self.arrive_at_next(next_infra, distance)
         else:
             # drive to next object:
-            self.drive_to_next(distance - next_infra.length)
+            if isinstance(self.location, Bridge):
+                # update the number of cargo vehicles passing that bridge in this step
+                self.location.cargo_vehicles_passing += 1
+                self.drive_to_next(distance - next_infra.length)
 
     def arrive_at_next(self, next_infra, location_offset):
         """
@@ -684,8 +687,12 @@ class PersonalVehicle(Vehicle):
             # stay on this object:
             self.arrive_at_next(next_infra, distance)
         else:
-            # drive to next object:
-            self.drive_to_next(distance - next_infra.length)
+            # drive to next object
+            # first check if current object is bridge
+            if isinstance(self.location, Bridge):
+                # update the number of personal vehicles passing that bridge in this step
+                self.location.personal_vehicles_passing += 1
+                self.drive_to_next(distance - next_infra.length)
 
     def arrive_at_next(self, next_infra, location_offset):
         """

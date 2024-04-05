@@ -189,7 +189,7 @@ class BangladeshModel(Model):
 
         self.driving_time_of_trucks = []  # initialise list for driving time of trucks
         self.speed_of_trucks = []  # initialise list for speed for trucks
-        self.collapsed_conditions_dict = {'A': 0.1, 'B': 0.2, 'C': 0.3, 'D': 0.5}
+        self.collapsed_conditions_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
 
         self.n_cargo = 2
         self.n_personal = 0
@@ -373,10 +373,11 @@ class BangladeshModel(Model):
                 elif model_type == 'intersection':
                     if not row['id'] in self.schedule._agents:
                         agent = Intersection(row['id'], self, row['length'], name, row['road'])
-                y = row['lat']
-                x = row['lon']
-                agent.pos = (x, y)
-                self.drive_dict[row['id']] = agent
+                if agent:
+                    y = row['lat']
+                    x = row['lon']
+                    agent.pos = (x, y)
+                    self.drive_dict[row['id']] = agent
 
                 if agent:
                     if model_type == 'bridge':
