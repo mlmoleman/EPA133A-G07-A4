@@ -410,7 +410,8 @@ class CargoVehicle(Vehicle):
         """
         To print the vehicle trajectory at each step
         """
-        print(self)
+        # print(self)
+
 
     def drive(self):
         # the distance that vehicle drives in a tick

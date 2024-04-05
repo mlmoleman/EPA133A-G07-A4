@@ -161,7 +161,7 @@ class BangladeshModel(Model):
 
     #@profile
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest",
+                 collapse_dict: defaultdict = {'A': 0.5, 'B': 0.5, 'C': 0.5, 'D': 0.5}, routing_type: str = "shortest",
                  flood_lever=False, cyclone_lever=False):
 
         self.flood_lever = flood_lever
